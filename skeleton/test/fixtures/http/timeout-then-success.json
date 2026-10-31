@@ -1,0 +1,32 @@
+[
+  {
+    "name": "first attempt times out",
+    "method": "GET",
+    "url": "https://api.example.com/data",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "status": "slow"
+      },
+      "delayMs": 35000
+    }
+  },
+  {
+    "name": "second attempt succeeds within timeout",
+    "method": "GET",
+    "url": "https://api.example.com/data",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "status": "ok"
+      },
+      "delayMs": 0
+    }
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "first attempt returns 500",
+    "method": "GET",
+    "url": "https://api.example.com/data",
+    "respondWith": {
+      "status": 500,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "error": "internal server error"
+      },
+      "delayMs": 0
+    }
+  },
+  {
+    "name": "second attempt returns 500",
+    "method": "GET",
+    "url": "https://api.example.com/data",
+    "respondWith": {
+      "status": 500,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "error": "internal server error"
+      },
+      "delayMs": 0
+    }
+  },
+  {
+    "name": "third attempt returns 500; helper exhausts retries and throws",
+    "method": "GET",
+    "url": "https://api.example.com/data",
+    "respondWith": {
+      "status": 500,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "error": "internal server error"
+      },
+      "delayMs": 0
+    }
+  }
+]

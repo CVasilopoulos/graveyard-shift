@@ -1,0 +1,77 @@
+[
+  {
+    "name": "first request to example.com (slot 1)",
+    "method": "GET",
+    "url": "https://example.com/api/1",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "request": 1
+      },
+      "delayMs": 0
+    }
+  },
+  {
+    "name": "second request to example.com (slot 2)",
+    "method": "GET",
+    "url": "https://example.com/api/2",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "request": 2
+      },
+      "delayMs": 0
+    }
+  },
+  {
+    "name": "third request to example.com (slot 3)",
+    "method": "GET",
+    "url": "https://example.com/api/3",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "request": 3
+      },
+      "delayMs": 0
+    }
+  },
+  {
+    "name": "fourth request to example.com (slot 4)",
+    "method": "GET",
+    "url": "https://example.com/api/4",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "request": 4
+      },
+      "delayMs": 0
+    }
+  },
+  {
+    "name": "fifth request to example.com (queued, released when a slot frees)",
+    "method": "GET",
+    "url": "https://example.com/api/5",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "request": 5
+      },
+      "delayMs": 0
+    }
+  }
+]

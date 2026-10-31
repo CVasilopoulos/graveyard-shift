@@ -1,0 +1,17 @@
+[
+  {
+    "name": "single GET request returns 404; helper throws immediately without retry",
+    "method": "GET",
+    "url": "https://api.example.com/notfound",
+    "respondWith": {
+      "status": 404,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "error": "not found"
+      },
+      "delayMs": 0
+    }
+  }
+]

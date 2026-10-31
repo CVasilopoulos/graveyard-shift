@@ -1,0 +1,33 @@
+[
+  {
+    "name": "first attempt returns 429 with Retry-After header",
+    "method": "GET",
+    "url": "https://api.example.com/data",
+    "respondWith": {
+      "status": 429,
+      "headers": {
+        "content-type": "application/json",
+        "retry-after": "2"
+      },
+      "body": {
+        "error": "rate limited"
+      },
+      "delayMs": 0
+    }
+  },
+  {
+    "name": "second attempt after Retry-After delay returns 200",
+    "method": "GET",
+    "url": "https://api.example.com/data",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "status": "ok"
+      },
+      "delayMs": 0
+    }
+  }
+]
