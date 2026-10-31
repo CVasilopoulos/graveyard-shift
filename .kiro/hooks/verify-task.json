@@ -4,7 +4,7 @@
     {
       "name": "Verify ticked tasks",
       "description": "After every spec task, check that each file a ticked task names exists and that npm test passes, so a task cannot be marked done without its code.",
-      "trigger": "PostTaskExecution",
+      "trigger": "PostTaskExec",
       "action": { "type": "command", "command": "PATH=$HOME/.local/bin:$PATH node .kiro/hooks/verify-task.mjs" },
       "timeout": 600
     }
