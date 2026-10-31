@@ -1,0 +1,27 @@
+{
+  "name": "graveyard-shift",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A skeleton for watch-and-warn apps that run entirely on GitHub",
+  "license": "MIT",
+  "exports": "./dist/index.js",
+  "bin": "./dist/cli/index.js",
+  "files": [
+    "dist",
+    "src/dashboard"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "0.7.0",
+    "zod": "3.22.4"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "1.0.4",
+    "fast-check": "3.15.1",
+    "typescript": "5.3.3",
+    "vitest": "1.0.4"
+  }
+}

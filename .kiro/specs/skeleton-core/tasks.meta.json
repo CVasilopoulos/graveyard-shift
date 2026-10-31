@@ -1,0 +1,313 @@
+{
+  "pbtResults": {
+    "6.2 Write property tests for the diff engine in `skeleton/test/core/diff.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1793434694920
+    }
+  },
+  "executionHistory": {
+    "1. Scaffold the workspace and skeleton package": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481713
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434484884
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434557161
+      }
+    ],
+    "2.1 Write `skeleton/src/core/types.ts` exporting all shared interfaces": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481715
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434559619
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434619726
+      }
+    ],
+    "3.1 Write `skeleton/src/core/stableJson.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481716
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434622364
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793435077711
+      }
+    ],
+    "3.2 Write property tests for Stable JSON in `skeleton/test/core/stableJson.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481718
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793435083930
+      }
+    ],
+    "4.1 Write `skeleton/src/core/mergeById.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481719
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434622634
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793435077840
+      }
+    ],
+    "4.2 Write property tests for mergeById in `skeleton/test/core/mergeById.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481720
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793435084172
+      }
+    ],
+    "5.1 Write `skeleton/src/core/agreement.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481722
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793435084358
+      }
+    ],
+    "5.2 Write property tests for the agreement rule in `skeleton/test/core/agreement.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481723
+      }
+    ],
+    "6.1 Write `skeleton/src/core/diff.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481725
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434622772
+      },
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793435078040
+      }
+    ],
+    "6.2 Write property tests for the diff engine in `skeleton/test/core/diff.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481726
+      }
+    ],
+    "7. Checkpoint — run `npm test` in `skeleton/`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481727
+      }
+    ],
+    "8.1 Write `skeleton/src/core/store.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481729
+      }
+    ],
+    "8.2 Write unit tests for the store in `skeleton/test/core/store.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481730
+      }
+    ],
+    "9.1 Write `skeleton/src/sources/http.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481732
+      }
+    ],
+    "9.2 Create HTTP test fixtures in `skeleton/test/fixtures/http/`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481733
+      }
+    ],
+    "9.3 Write fixture-based tests for the HTTP helper in `skeleton/test/sources/http.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481734
+      }
+    ],
+    "10.1 Write `skeleton/src/core/runner.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481736
+      }
+    ],
+    "10.2 Write integration tests for the runner in `skeleton/test/runner/runner.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481737
+      }
+    ],
+    "11. Checkpoint — run `npm test` in `skeleton/`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481738
+      }
+    ],
+    "12.1 Write `skeleton/src/dashboard/index.html`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481739
+      }
+    ],
+    "12.2 Write `skeleton/src/dashboard/style.css`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481740
+      }
+    ],
+    "12.3 Write `skeleton/src/dashboard/app.js`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481742
+      }
+    ],
+    "13.1 Write `skeleton/src/mcp/server.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481743
+      }
+    ],
+    "13.2 Write unit tests for the MCP server in `skeleton/test/mcp/server.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481745
+      }
+    ],
+    "14.1 Write `skeleton/src/notify/notifier.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481746
+      }
+    ],
+    "14.2 Write unit tests for the notifier in `skeleton/test/notify/notifier.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481747
+      }
+    ],
+    "15.1 Write `skeleton/src/cli/index.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481749
+      }
+    ],
+    "15.2 Write unit tests for the CLI in `skeleton/test/cli/cli.test.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481750
+      }
+    ],
+    "16.1 Write `skeleton/src/index.ts`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481751
+      }
+    ],
+    "16.2 Write `skeleton/README.md`": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481752
+      }
+    ],
+    "17. Final checkpoint — full test suite and build": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434481754
+      }
+    ],
+    "2. Implement core types": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793434619735
+      }
+    ],
+    "3. Implement Stable JSON serialiser and property tests": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793435083932
+      }
+    ],
+    "4. Implement mergeById and property tests": [
+      {
+        "executionId": "c0a0a1dc-512f-4f6a-a8a5-82674a627d6e",
+        "chatSessionId": "sess_065747a5-24b5-4bde-9e36-150877ff6a29",
+        "timestamp": 1793435084174
+      }
+    ]
+  }
+}

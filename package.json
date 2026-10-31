@@ -1,0 +1,8 @@
+{
+  "name": "graveyard-shift-monorepo",
+  "private": true,
+  "workspaces": [
+    "skeleton",
+    "apps/*"
+  ]
+}
