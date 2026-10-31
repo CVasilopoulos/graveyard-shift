@@ -13,4 +13,6 @@ inclusion: always
 - Dashboard: one static `index.html`, one CSS file, one small vanilla JS module that fetches `findings.json`. No framework. It must work from a subpath on GitHub Pages and meet WCAG AA contrast.
 - GitHub Actions: pinned action versions, least-privilege `permissions`, `concurrency` to avoid overlapping runs.
 - Code style: small modules, descriptive names, no explanatory comments unless the why is not obvious from the code.
+- Versions (checked 2026-10-31, use these or newer, never older): @modelcontextprotocol/sdk 1.32, zod 4, typescript 6.0, vitest 5, @vitest/coverage-v8 5, fast-check 4, @types/node 22. Check `npm view <pkg> version` before adding any dependency.
+- A task is done only when every file it names exists and `npm test` passes; the Verify ticked tasks hook enforces this after each spec task.
 - Licence: MIT.
