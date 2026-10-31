@@ -1,0 +1,584 @@
+/* Graveyard Shift Dashboard Stylesheet */
+
+:root {
+  /* Theme colors - customizable via theme.json */
+  --accent-color: #6b21a8;
+  --label-confirmed: "Haunted";
+  --label-ghost: "Ghost";
+  --label-resolved: "Laid to Rest";
+
+  /* Base colors - light mode defaults (WCAG AA compliant) */
+  --bg: #ffffff;
+  --text: #1f2937;
+  --border: #d1d5db;
+  --border-muted: #e5e7eb;
+
+  /* Status label styling */
+  --confirmed-bg: #dcfce7;
+  --confirmed-text: #166534;
+  --confirmed-border: #22c55e;
+
+  --ghost-bg: #f3e8ff;
+  --ghost-text: #6b21a8;
+  --ghost-border: #a855f7;
+
+  --resolved-bg: #fee2e2;
+  --resolved-text: #7c2d12;
+  --resolved-border: #ef4444;
+
+  /* Severity colors (WCAG AA: ≥3:1 contrast for UI components) */
+  --critical-bg: #7f1d1d;
+  --critical-text: #fecaca;
+
+  --high-bg: #92400e;
+  --high-text: #fde047;
+
+  --medium-bg: #284e0a;
+  --medium-text: #bfef45;
+
+  --low-bg: #042f2e;
+  --low-text: #67e8f9;
+
+  --info-bg: #0c4a6e;
+  --info-text: #93c5fd;
+
+  /* UI elements */
+  --input-border: #9ca3af;
+  --input-focus: #3b82f6;
+  --button-bg: var(--accent-color);
+  --button-text: #ffffff;
+}
+
+/* Dark mode overrides (WCAG AA compliant) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Base colors - dark mode */
+    --bg: #1f2937;
+    --text: #f3f4f6;
+    --border: #4b5563;
+    --border-muted: #374151;
+
+    /* Status label styling */
+    --confirmed-bg: #064e3b;
+    --confirmed-text: #86efac;
+    --confirmed-border: #16a34a;
+
+    --ghost-bg: #3730a3;
+    --ghost-text: #e9d5ff;
+    --ghost-border: #7c3aed;
+
+    --resolved-bg: #7f1d1d;
+    --resolved-text: #fca5a5;
+    --resolved-border: #dc2626;
+
+    /* Severity colors */
+    --critical-bg: #1f2937;
+    --critical-text: #fca5a5;
+
+    --high-bg: #1f2937;
+    --high-text: #fcd34d;
+
+    --medium-bg: #1f2937;
+    --medium-text: #bfef45;
+
+    --low-bg: #1f2937;
+    --low-text: #67e8f9;
+
+    --info-bg: #1f2937;
+    --info-text: #93c5fd;
+
+    /* UI elements */
+    --input-border: #6b7280;
+    --input-focus: #60a5fa;
+    --button-bg: var(--accent-color);
+    --button-text: #ffffff;
+  }
+}
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* Typography */
+h1, h2, h3 {
+  margin: 0.5em 0;
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+p {
+  margin: 0.5em 0;
+}
+
+/* Links */
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+
+a:hover,
+a:focus {
+  opacity: 0.8;
+}
+
+/* Layout */
+header {
+  padding: 2rem 1rem;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+  margin: 0;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+section {
+  margin-bottom: 3rem;
+}
+
+section:last-child {
+  margin-bottom: 0;
+}
+
+/* Filter control */
+fieldset {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 0;
+}
+
+legend {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+fieldset label {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 1.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+fieldset input[type="radio"] {
+  margin-right: 0.5rem;
+  cursor: pointer;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent-color);
+}
+
+fieldset input[type="radio"]:focus {
+  outline: 2px solid var(--input-focus);
+  outline-offset: 2px;
+}
+
+/* Aggregate counts */
+.counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.count-item {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  text-align: center;
+  background-color: var(--bg);
+}
+
+.count-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.count-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+/* Findings list */
+#findings-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.finding {
+  border-left: 5px solid;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-left-width: 5px;
+}
+
+.finding.confirmed {
+  border-left-color: var(--confirmed-border);
+  border-left-style: solid;
+}
+
+.finding.ghost {
+  border-left-color: var(--ghost-border);
+  border-left-style: dashed;
+}
+
+.finding.resolved {
+  border-left-color: var(--resolved-border);
+  border-left-style: dotted;
+  opacity: 0.75;
+}
+
+.finding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.finding-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.finding-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Status badges - with text label AND distinct styling */
+.badge.status {
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.badge.confirmed {
+  background-color: var(--confirmed-bg);
+  color: var(--confirmed-text);
+  border-color: var(--confirmed-border);
+}
+
+.badge.ghost {
+  background-color: var(--ghost-bg);
+  color: var(--ghost-text);
+  border-color: var(--ghost-border);
+}
+
+.badge.resolved {
+  background-color: var(--resolved-bg);
+  color: var(--resolved-text);
+  border-color: var(--resolved-border);
+}
+
+/* Status badge pseudo-element for icon/indication */
+.badge.confirmed::before {
+  content: "✓";
+  margin-right: 0.25rem;
+  font-weight: 700;
+}
+
+.badge.ghost::before {
+  content: "👻";
+  margin-right: 0.25rem;
+}
+
+.badge.resolved::before {
+  content: "✗";
+  margin-right: 0.25rem;
+  font-weight: 700;
+}
+
+/* Severity badges - colour + text */
+.badge.severity {
+  border: none;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.badge.critical {
+  background-color: var(--critical-bg);
+  color: var(--critical-text);
+}
+
+.badge.high {
+  background-color: var(--high-bg);
+  color: var(--high-text);
+}
+
+.badge.medium {
+  background-color: var(--medium-bg);
+  color: var(--medium-text);
+}
+
+.badge.low {
+  background-color: var(--low-bg);
+  color: var(--low-text);
+}
+
+.badge.info {
+  background-color: var(--info-bg);
+  color: var(--info-text);
+}
+
+/* Finding content */
+.finding-summary {
+  margin: 1rem 0;
+  line-height: 1.6;
+}
+
+.finding-sources {
+  margin: 1rem 0;
+}
+
+.sources-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.source-list {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.source-list li {
+  padding: 0.25rem 0.75rem;
+  background-color: var(--border-muted);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+/* Last run info */
+#last-run-info {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background-color: var(--bg);
+  font-size: 0.875rem;
+}
+
+.last-run-timestamp {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.error-sources {
+  margin-top: 0.5rem;
+}
+
+.error-sources strong {
+  color: #dc2626;
+}
+
+/* Error messages */
+.error-banner {
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  background-color: #fee2e2;
+  color: #7c2d12;
+  border: 1px solid #fca5a5;
+  border-radius: 0.5rem;
+  border-left: 4px solid #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  .error-banner {
+    background-color: #7f1d1d;
+    color: #fca5a5;
+    border-color: #991b1b;
+  }
+}
+
+.error-banner strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text);
+  border: 1px dashed var(--border);
+  border-radius: 0.5rem;
+  background-color: var(--bg);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  header {
+    padding: 1.5rem 1rem;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  main {
+    padding: 1.5rem 1rem;
+  }
+
+  .finding-header {
+    flex-direction: column;
+  }
+
+  .finding-badges {
+    width: 100%;
+  }
+
+  fieldset label {
+    display: flex;
+    margin-right: 1rem;
+  }
+
+  .counts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  header {
+    padding: 1rem 1rem;
+  }
+
+  header h1 {
+    font-size: 1.25rem;
+  }
+
+  main {
+    padding: 1rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  fieldset {
+    padding: 1rem;
+  }
+
+  fieldset label {
+    display: block;
+    margin-right: 0;
+    margin-bottom: 0.75rem;
+  }
+
+  .finding {
+    padding: 1rem;
+  }
+
+  .finding-title {
+    font-size: 1.1rem;
+  }
+
+  .count-value {
+    font-size: 1.5rem;
+  }
+
+  .counts {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .count-item {
+    padding: 0.75rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  .finding {
+    border-width: 2px;
+  }
+
+  .badge {
+    border-width: 2px;
+  }
+
+  fieldset {
+    border-width: 2px;
+  }
+}
+
+/* Print styles */
+@media print {
+  header {
+    background-color: var(--accent-color);
+    color: #ffffff;
+  }
+
+  .finding.resolved {
+    opacity: 1;
+  }
+
+  a {
+    color: inherit;
+  }
+}

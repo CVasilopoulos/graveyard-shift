@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Graveyard Shift</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Graveyard Shift</h1>
+  </header>
+
+  <main>
+    <section id="filter-section">
+      <fieldset>
+        <legend>Filter findings</legend>
+        <label>
+          <input type="radio" name="status-filter" value="all" checked>
+          All
+        </label>
+        <label>
+          <input type="radio" name="status-filter" value="confirmed">
+          Confirmed
+        </label>
+        <label>
+          <input type="radio" name="status-filter" value="ghost">
+          Ghost
+        </label>
+        <label>
+          <input type="radio" name="status-filter" value="resolved">
+          Resolved
+        </label>
+      </fieldset>
+    </section>
+
+    <section id="counts-section">
+      <div class="counts">
+        <div class="count-item">
+          <span class="count-label">Total</span>
+          <span class="count-value" id="count-total">0</span>
+        </div>
+        <div class="count-item">
+          <span class="count-label">Confirmed</span>
+          <span class="count-value" id="count-confirmed">0</span>
+        </div>
+        <div class="count-item">
+          <span class="count-label">Ghost</span>
+          <span class="count-value" id="count-ghost">0</span>
+        </div>
+        <div class="count-item">
+          <span class="count-label">Resolved</span>
+          <span class="count-value" id="count-resolved">0</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="findings-section">
+      <div id="findings-list" role="region" aria-label="Findings">
+      </div>
+    </section>
+
+    <section id="last-run-section">
+      <div id="last-run-info" role="region" aria-label="Last run information">
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

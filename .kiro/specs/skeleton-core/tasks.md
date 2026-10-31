@@ -62,13 +62,13 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - **Validates: Requirements 4.7**
     - _Requirements: 11.5_
 
-- [ ] 5. Implement agreement rule and property tests
-  - [ ] 5.1 Write `skeleton/src/core/agreement.ts`
+- [x] 5. Implement agreement rule and property tests
+  - [x] 5.1 Write `skeleton/src/core/agreement.ts`
     - Accept `PartialFinding[]` (findings with `id`, `title`, `sources: string[]`, `evidence`, and pass-through fields)
     - For each finding compute `new Set(sources).size`; if ≥ 2 set `status: "confirmed"`, else set `status: "ghost"`
     - Return new objects via spread; never mutate input objects
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.7, 3.8_
-  - [ ] 5.2 Write property tests for the agreement rule in `skeleton/test/core/agreement.test.ts`
+  - [x] 5.2 Write property tests for the agreement rule in `skeleton/test/core/agreement.test.ts`
     - Define fast-check arbitraries `arbSourceResults` and `arbPartialFindings`
     - **Property 1: Confirmed invariant** — any finding whose id appears in ≥ 2 SourceResult objects with distinct sourceNames is always assigned `confirmed` after `mergeById` + `applyAgreementRule`
     - **Validates: Requirements 3.1, 3.3, 3.4**
@@ -152,8 +152,8 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Restore `globalThis.fetch` in `afterEach`
     - _Requirements: 11.7, 11.8_
 
-- [ ] 10. Implement the runner and integration tests
-  - [ ] 10.1 Write `skeleton/src/core/runner.ts`
+- [x] 10. Implement the runner and integration tests
+  - [x] 10.1 Write `skeleton/src/core/runner.ts`
     - Implement `runApp(appDef: AppDefinition<z.ZodTypeAny>, opts: RunnerOptions): Promise<void>`
     - Parse config with `appDef.configSchema.safeParse`; on failure write field errors to stderr and throw
     - Run all sources concurrently with `Promise.allSettled`; collect fulfilled `SourceResult[]` and rejected `{ name, error }[]`
@@ -163,7 +163,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Manage timestamps: `firstSeen` from previous store or now; `lastSeen` always now; `resolvedAt` set on newly resolved ids
     - Call `computeDiff(prev, curr)`, then `writeStore`, then `notify` (unless `dryRun`)
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 5.10_
-  - [ ] 10.2 Write integration tests for the runner in `skeleton/test/runner/runner.test.ts`
+  - [x] 10.2 Write integration tests for the runner in `skeleton/test/runner/runner.test.ts`
     - Use an in-memory store stub (spy on `readStore`/`writeStore`) and a notify stub
     - Test: full cycle — two sources succeed, merged findings have correct confirmed/ghost status, store is written, notifier is called
     - Test: one source fails — stale carry-forward preserves its previous contributions; `staleError` present on evidence; `stale: true` on finding
@@ -171,22 +171,22 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Test: config validation failure — runner exits before touching store
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
 
-- [ ] 11. Checkpoint — run `npm test` in `skeleton/`
+- [x] 11. Checkpoint — run `npm test` in `skeleton/`
   - Ensure store, HTTP helper, and runner tests pass; verify no test makes a live network call; ask the user if any questions arise
 
 - [ ] 12. Implement the static dashboard
-  - [ ] 12.1 Write `skeleton/src/dashboard/index.html`
+  - [-] 12.1 Write `skeleton/src/dashboard/index.html`
     - Structural skeleton only: `<head>` with charset and viewport meta, link to `style.css`, title placeholder
     - `<body>` with header, main landmarks, filter `<fieldset>` with four radio inputs (`all`, `confirmed`, `ghost`, `resolved`), aggregate counts region, findings list region, last-run info region
     - Load `app.js` as `<script type="module">`; no inline scripts or styles
     - _Requirements: 8.1, 8.12, 8.13_
-  - [ ] 12.2 Write `skeleton/src/dashboard/style.css`
+  - [-] 12.2 Write `skeleton/src/dashboard/style.css`
     - Define CSS custom properties on `:root`: `--accent-color`, `--label-confirmed`, `--label-ghost`, `--label-resolved`, `--bg`, `--text`, `--border`
     - Provide default values meeting WCAG AA contrast (≥ 4.5:1 for normal text, ≥ 3:1 for large text / UI components) for both light and dark schemes using `@media (prefers-color-scheme: dark)`
     - Style severity badges using both a background colour and a text label so distinction does not rely on colour alone
     - Style confirmed/ghost/resolved findings with both a distinct label/badge AND a left border pattern
     - _Requirements: 8.7, 8.8, 8.10_
-  - [ ] 12.3 Write `skeleton/src/dashboard/app.js`
+  - [-] 12.3 Write `skeleton/src/dashboard/app.js`
     - Resolve all fetch paths relative to `document.baseURI` so the dashboard works from any GitHub Pages subpath
     - Load `findings.json`, `runs.json`, and optionally `theme.json` (catch failure → fall back to defaults); apply theme tokens as CSS custom properties on `:root`
     - Render findings list filtered by the active radio; re-render on filter change without re-fetching
@@ -203,7 +203,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Each tool call invokes the data loader fresh; returns error objects (not throws) for `NOT_FOUND`, `VALIDATION_ERROR`, `UNAVAILABLE`
     - Export `createMcpServer(source: DataSource): McpServerHandle` starting `serveStdio` and returning `{ close() }`
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10_
-  - [ ] 13.2 Write unit tests for the MCP server in `skeleton/test/mcp/server.test.ts`
+  - [~] 13.2 Write unit tests for the MCP server in `skeleton/test/mcp/server.test.ts`
     - Use in-memory data stubs (no file I/O, no network)
     - Test `list_findings`: returns all findings with `status: "all"`; filters correctly for `"confirmed"` and `"ghost"`
     - Test `get_finding`: returns the matching Finding; returns `NOT_FOUND` error for unknown id
@@ -213,7 +213,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - _Requirements: 9.5, 9.6, 9.7, 9.8, 9.9, 9.10_
 
 - [ ] 14. Implement the notifier and tests
-  - [ ] 14.1 Write `skeleton/src/notify/notifier.ts`
+  - [~] 14.1 Write `skeleton/src/notify/notifier.ts`
     - Read `GITHUB_TOKEN` from env; throw a descriptive error if absent before making any API call
     - Create a shared `HttpClient` (via `createHttpClient`) with Bearer auth and project User-Agent
     - Implement `searchForIssue(repo, findingId)` and `searchForPR(repo, findingId)` using GitHub search API with `in:title "<findingId>"` query
@@ -226,7 +226,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Create `graveyard-shift` label in repo if absent; add it to all created issues and PRs
     - Sanitise finding id to branch name: replace non-alphanumeric chars with `-`; prefix `graveyard-shift/`
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12, 10.13, 10.14, 10.15_
-  - [ ] 14.2 Write unit tests for the notifier in `skeleton/test/notify/notifier.test.ts`
+  - [~] 14.2 Write unit tests for the notifier in `skeleton/test/notify/notifier.test.ts`
     - Mock `createHttpClient` to return a stub client capturing API calls
     - Set `GITHUB_TOKEN` and `GITHUB_REPOSITORY` in the test environment via `process.env`
     - Test: opens new issue for a confirmed appeared finding
@@ -239,14 +239,14 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - _Requirements: 10.1, 10.2, 10.5, 10.6, 10.11, 10.12, 10.13_
 
 - [ ] 15. Implement the CLI and tests
-  - [ ] 15.1 Write `skeleton/src/cli/index.ts`
+  - [~] 15.1 Write `skeleton/src/cli/index.ts`
     - Parse `process.argv.slice(2)` with a hand-written switch dispatcher on `command`
     - `run <appDir>`: dynamic import `<appDir>/index.js`; locate config and data dir (with `--config` and `--data` overrides); call `runApp`; pass `resolvedRetentionDays` from parsed config or default 14; exit 0 on success, exit 1 with stderr message on error
     - `site <appDir> <outDir>`: dynamic import for theme; copy all `src/dashboard/` files to `<outDir>`; write `theme.json` via `stableStringify`; exit 0 on success, exit 1 on error
     - `mcp <dataDirOrUrl>`: detect HTTPS URL vs. local path; call `createMcpServer`; register `SIGINT`/`SIGTERM` handlers calling `handle.close()`; keep process alive via stdio
     - Unrecognised command or missing args: print usage message listing all three commands with arguments; exit 1
     - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8_
-  - [ ] 15.2 Write unit tests for the CLI in `skeleton/test/cli/cli.test.ts`
+  - [~] 15.2 Write unit tests for the CLI in `skeleton/test/cli/cli.test.ts`
     - Stub `runApp`, `createMcpServer`, and file copy operations
     - Test: `run` command invokes `runApp` with correct appDir, configPath, dataDir, and retentionDays; exits 0
     - Test: `run` command writes to stderr and exits 1 when `runApp` throws
@@ -256,7 +256,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - _Requirements: 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
 
 - [ ] 16. Write the package entry point and README
-  - [ ] 16.1 Write `skeleton/src/index.ts`
+  - [~] 16.1 Write `skeleton/src/index.ts`
     - Re-export all public types from `./core/types.js`
     - Re-export `mergeById` from `./core/mergeById.js`
     - Re-export `applyAgreementRule` from `./core/agreement.js`
@@ -267,7 +267,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Re-export `notify` from `./notify/notifier.js`
     - Re-export `runApp` from `./core/runner.js`
     - _Requirements: 1.4_
-  - [ ] 16.2 Write `skeleton/README.md`
+  - [~] 16.2 Write `skeleton/README.md`
     - Section: **Sources** — one-sentence purpose; required imports; code example that compiles with `tsc --strict`
     - Section: **Rules** — one-sentence purpose; required imports; code example that compiles with `tsc --strict`
     - Section: **Config** — one-sentence purpose; required imports; code example using `z.object(...)` that compiles with `tsc --strict`
@@ -281,7 +281,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Each section must be under 40 lines; write in English
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.9_
 
-- [ ] 17. Final checkpoint — full test suite and build
+- [~] 17. Final checkpoint — full test suite and build
   - Run `npm test` in `skeleton/` and verify all tests pass offline; run `npm run build` to ensure `tsc` compiles with no errors; ask the user if any questions arise
 
 ## Notes
