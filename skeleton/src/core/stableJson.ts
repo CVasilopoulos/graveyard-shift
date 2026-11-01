@@ -31,7 +31,7 @@ function stableStringifyInner(value: unknown, indent: number): string {
 
     const items = value.map((v) => {
       const indentStr = '  '.repeat(indent + 1);
-      const serialized = stableStringifyInner(v, indent + 1);
+      const serialized = v === undefined ? 'null' : stableStringifyInner(v, indent + 1);
       return indentStr + serialized;
     });
 
@@ -40,7 +40,9 @@ function stableStringifyInner(value: unknown, indent: number): string {
   }
 
   // Handle objects
-  const keys = Object.keys(value as object).sort();
+  const keys = Object.keys(value as object)
+    .filter((k) => (value as Record<string, unknown>)[k] !== undefined)
+    .sort();
 
   if (keys.length === 0) {
     return '{}';

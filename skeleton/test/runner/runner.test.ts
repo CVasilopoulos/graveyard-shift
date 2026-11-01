@@ -1,594 +1,187 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 import { promises as fs } from 'fs';
-import type {
-  SourceResult,
-  Finding,
-  AppDefinition,
-  DiffResult,
-  RunRecord,
-  StoreData,
-} from '../../src/core/types.js';
-import { readStore, writeStore } from '../../src/core/store.js';
-import { mergeById } from '../../src/core/mergeById.js';
-import { computeDiff } from '../../src/core/diff.js';
 import { z } from 'zod';
+import { runApp, type RunnerOptions } from '../../src/core/runner.js';
+import { mergeById } from '../../src/core/mergeById.js';
+import { notify } from '../../src/notify/notifier.js';
+import type { AppDefinition, Finding, SourceResult } from '../../src/core/types.js';
 
-/**
- * Simplified runner mock that demonstrates the integration behavior.
- * This implements the core logic from the runner spec without the full complexity.
- * Uses in-memory store stubs and vitest spies to verify behavior.
- */
-async function runAppMock(
-  appDef: AppDefinition<z.ZodTypeAny>,
-  opts: {
-    configData?: unknown;
-    dataDir: string;
-    dryRun?: boolean;
-  },
-  overrides?: {
-    readStoreOverride?: (dir: string) => Promise<StoreData>;
-    writeStoreOverride?: (
-      dir: string,
-      findings: Finding[],
-      diff: DiffResult,
-      runRecord: RunRecord,
-      retentionDays: number,
-    ) => Promise<void>;
-    notifyOverride?: (
-      diff: DiffResult,
-      findings: Finding[],
-      opts?: unknown,
-    ) => Promise<void>;
-  },
-): Promise<void> {
-  const configData = opts.configData || {};
+vi.mock('../../src/notify/notifier.js', () => ({ notify: vi.fn(async () => {}) }));
 
-  // Parse and validate config
-  const parseResult = appDef.configSchema.safeParse(configData);
-  if (!parseResult.success) {
-    const errors = parseResult.error.issues.map((e) => `${e.path}: ${e.message}`).join('; ');
-    process.stderr.write(`Config validation failed: ${errors}\n`);
-    throw new Error(`Config validation failed: ${errors}`);
-  }
+const configSchema = z.object({
+  items: z.record(z.string(), z.array(z.string())),
+  failing: z.array(z.string()).default([]),
+  repo: z.string().optional(),
+  maxNewIssues: z.number().optional(),
+  maxNewPRs: z.number().optional(),
+});
+type Config = z.infer<typeof configSchema>;
 
-  const config = parseResult.data;
-
-  // Fetch sources concurrently
-  const sourceResults = await Promise.allSettled(
-    appDef.sources.map((src) => src(config)),
-  );
-
-  // Collect results and errors
-  const fresh: SourceResult[] = [];
-  const erroredSources: { name: string; error: unknown }[] = [];
-
-  const sourceNames = appDef.sources.map((_, i) => `source${i + 1}`);
-
-  for (let i = 0; i < sourceResults.length; i++) {
-    const result = sourceResults[i];
-    if (result.status === 'fulfilled') {
-      fresh.push(result.value);
-    } else {
-      erroredSources.push({
-        name: sourceNames[i] || `source${i}`,
-        error: result.reason,
-      });
-    }
-  }
-
-  // Read previous store
-  const prevStore = await (overrides?.readStoreOverride
-    ? overrides.readStoreOverride(opts.dataDir)
-    : readStore(opts.dataDir));
-
-  // If all sources failed, write only runs.json and throw
-  if (fresh.length === 0 && erroredSources.length > 0) {
-    const errorSources = erroredSources.map((e) => e.name);
-    const runRecord: RunRecord = {
-      runAt: new Date().toISOString(),
-      confirmedCount: 0,
-      ghostCount: 0,
-      resolvedCount: 0,
-      errorSources,
+function source(name: string) {
+  const fetch = async (config: Config): Promise<SourceResult> => {
+    if (config.failing.includes(name)) throw new Error(`${name} is down`);
+    return {
+      sourceName: name,
+      fetchedAt: new Date().toISOString(),
+      findings: (config.items[name] ?? []).map((id) => ({ id, title: `${id} seen by ${name}` })),
     };
-
-    const emptyDiff: DiffResult = {
-      appeared: [],
-      still: [],
-      resolved: [],
-      promoted: [],
-      demoted: [],
-    };
-
-    if (overrides?.writeStoreOverride) {
-      await overrides.writeStoreOverride(opts.dataDir, prevStore.findings, emptyDiff, runRecord, 14);
-    } else {
-      await writeStore(opts.dataDir, prevStore.findings, emptyDiff, runRecord, 14);
-    }
-
-    throw new Error(`All sources failed: ${errorSources.join(', ')}`);
-  }
-
-  // Stale carry-forward: for errored sources, preserve their previous contributions with staleError marked
-  const prevFindingsMap = new Map(prevStore.findings.map((f) => [f.id, f]));
-  const finalFindings: Finding[] = [];
-
-  // First, process fresh results
-  const mergedFresh = mergeById(fresh);
-  const ruleFreshResults = appDef.rules(fresh, config);
-
-  // Map rule results back with source info from merged
-  const freshFindingMap = new Map<string, Finding>();
-  for (const merged of mergedFresh) {
-    const ruleMatch = ruleFreshResults.find((r) => r.id === merged.id);
-    if (ruleMatch) {
-      freshFindingMap.set(merged.id, {
-        ...ruleMatch,
-        sources: merged.sources,
-        evidence: merged.evidence,
-        status: new Set(merged.sources).size >= 2 ? 'confirmed' : 'ghost',
-        firstSeen: prevFindingsMap.get(merged.id)?.firstSeen || new Date().toISOString(),
-        lastSeen: new Date().toISOString(),
-      });
-    }
-  }
-
-  // Now add stale contributions from errored sources
-  for (const errSource of erroredSources) {
-    const prevContributions = prevStore.findings.filter((f) =>
-      f.sources.includes(errSource.name),
-    );
-
-    for (const prevFinding of prevContributions) {
-      // If this finding wasn't reported by fresh sources, keep it from previous
-      if (!freshFindingMap.has(prevFinding.id)) {
-        // Mark evidence with staleError
-        const updated: Finding = {
-          ...prevFinding,
-          evidence: prevFinding.evidence.map((e) =>
-            e.sourceName === errSource.name
-              ? {
-                  ...e,
-                  staleError: String(
-                    errSource.error instanceof Error
-                      ? errSource.error.message
-                      : errSource.error,
-                  ),
-                }
-              : e,
-          ),
-          lastSeen: new Date().toISOString(),
-        };
-        freshFindingMap.set(prevFinding.id, updated);
-      } else {
-        // If fresh sources also reported it, add stale evidence
-        const curr = freshFindingMap.get(prevFinding.id)!;
-        const staleEvidence = prevFinding.evidence
-          .filter((e) => e.sourceName === errSource.name)
-          .map((e) => ({
-            ...e,
-            staleError: String(
-              errSource.error instanceof Error
-                ? errSource.error.message
-                : errSource.error,
-            ),
-          }));
-
-        if (staleEvidence.length > 0) {
-          freshFindingMap.set(prevFinding.id, {
-            ...curr,
-            evidence: [...curr.evidence, ...staleEvidence],
-            sources: Array.from(new Set([...curr.sources, errSource.name])),
-          });
-        }
-      }
-    }
-  }
-
-  // Compute final findings array
-  const curr = Array.from(freshFindingMap.values());
-
-  // Compute diff
-  const diff = computeDiff(prevStore.findings, curr);
-
-  // Set resolvedAt for newly resolved findings
-  const final = curr.map((f) => {
-    if (diff.resolved.includes(f.id)) {
-      return { ...f, resolvedAt: new Date().toISOString() };
-    }
-    return f;
-  });
-
-  // Write store
-  const confirmedCount = final.filter((f) => f.status === 'confirmed').length;
-  const ghostCount = final.filter((f) => f.status === 'ghost').length;
-  const resolvedCount = diff.resolved.length;
-
-  const runRecord: RunRecord = {
-    runAt: new Date().toISOString(),
-    confirmedCount,
-    ghostCount,
-    resolvedCount,
-    errorSources: erroredSources.map((e) => e.name),
   };
-
-  if (overrides?.writeStoreOverride) {
-    await overrides.writeStoreOverride(opts.dataDir, final, diff, runRecord, 14);
-  } else {
-    await writeStore(opts.dataDir, final, diff, runRecord, 14);
-  }
-
-  // Call notifier if not in dry-run mode
-  if (!opts.dryRun && overrides?.notifyOverride) {
-    await overrides.notifyOverride(diff, final);
-  }
+  Object.defineProperty(fetch, 'name', { value: name });
+  return fetch;
 }
 
-describe('runner integration tests', () => {
-  let tmpDir: string;
+const app: AppDefinition<typeof configSchema> = {
+  sources: [source('alpha'), source('beta')],
+  rules: (results) =>
+    mergeById(results).map((m) => ({
+      id: m.id,
+      title: m.title,
+      summary: m.title,
+      severity: 'low' as const,
+      status: 'ghost' as const,
+      sources: m.sources,
+      evidence: m.evidence,
+    })),
+  configSchema,
+  theme: { name: 'Test', tagline: 'Test', accentColor: '#000000' },
+};
 
-  beforeEach(async () => {
-    tmpDir = path.join(os.tmpdir(), `runner-test-${Date.now()}-${Math.random()}`);
-    await fs.mkdir(tmpDir, { recursive: true });
+const T1 = '2026-11-01T00:00:00.000Z';
+const T2 = '2026-11-02T00:00:00.000Z';
+const T3 = '2026-11-03T00:00:00.000Z';
+
+let dir: string;
+
+beforeEach(async () => {
+  dir = await fs.mkdtemp(path.join(os.tmpdir(), 'runapp-'));
+  vi.mocked(notify).mockClear();
+  vi.useFakeTimers({ toFake: ['Date'] });
+});
+
+afterEach(async () => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+  await fs.rm(dir, { recursive: true, force: true });
+});
+
+async function run(config: Record<string, unknown>, at: string, extra: Partial<RunnerOptions> = {}) {
+  vi.setSystemTime(new Date(at));
+  const configPath = path.join(dir, 'config.json');
+  await fs.writeFile(configPath, JSON.stringify(config));
+  await runApp(app, { appDir: dir, dataDir: path.join(dir, 'data'), configPath, dryRun: true, ...extra });
+}
+
+async function readData<T>(name: string): Promise<T> {
+  return JSON.parse(await fs.readFile(path.join(dir, 'data', name), 'utf-8')) as T;
+}
+
+async function findingsById(): Promise<Record<string, Finding>> {
+  const findings = await readData<Finding[]>('findings.json');
+  return Object.fromEntries(findings.map((f) => [f.id, f]));
+}
+
+describe('runApp', () => {
+  it('confirms a finding two sources report and keeps a single-source finding as a ghost', async () => {
+    await run({ items: { alpha: ['a', 'b'], beta: ['a'] } }, T1);
+    const raw = await fs.readFile(path.join(dir, 'data', 'findings.json'), 'utf-8');
+    expect(raw.endsWith('\n')).toBe(true);
+    const f = await findingsById();
+    expect(Object.keys(f)).toEqual(['a', 'b']);
+    expect(f.a.status).toBe('confirmed');
+    expect(f.a.sources.sort()).toEqual(['alpha', 'beta']);
+    expect(f.b.status).toBe('ghost');
+    expect(f.a.firstSeen).toBe(T1);
+    expect(f.a.lastSeen).toBe(T1);
+    expect('resolvedAt' in f.a).toBe(false);
   });
 
-  afterEach(async () => {
-    try {
-      await fs.rm(tmpDir, { recursive: true, force: true });
-    } catch (err) {
-      // Ignore cleanup errors
-    }
+  it('keeps firstSeen and moves lastSeen on a later run', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T1);
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T2);
+    const f = await findingsById();
+    expect(f.a.firstSeen).toBe(T1);
+    expect(f.a.lastSeen).toBe(T2);
   });
 
-  describe('Test 1: Full cycle — two sources succeed', () => {
-    it('merges findings, assigns correct status, and calls store and notifier', async () => {
-      const configSchema = z.object({ threshold: z.number().default(0) });
-
-      // Create mock app definition
-      const appDef = {
-        sources: [
-          async () => ({
-            sourceName: 'source1',
-            findings: [
-              { id: 'vuln-1', title: 'Vulnerability 1' },
-              { id: 'vuln-2', title: 'Issue 2' },
-            ],
-            fetchedAt: new Date().toISOString(),
-          }),
-          async () => ({
-            sourceName: 'source2',
-            findings: [
-              { id: 'vuln-1', title: 'Vulnerability 1' },
-              { id: 'vuln-3', title: 'Issue 3' },
-            ],
-            fetchedAt: new Date().toISOString(),
-          }),
-        ],
-        rules: (results: SourceResult[]) => {
-          const findings: any[] = [];
-          for (const result of results) {
-            for (const item of result.findings) {
-              findings.push({
-                id: item.id,
-                title: item.title,
-                summary: `Summary of ${item.title}`,
-                severity: 'high',
-              });
-            }
-          }
-          return findings;
-        },
-        configSchema,
-        theme: { name: 'Test', tagline: 'Test', accentColor: '#000' },
-      };
-
-      // Spy on store write
-      const writeStoreSpy = vi.fn(
-        async (
-          dir: string,
-          findings: Finding[],
-          diff: DiffResult,
-          runRecord: RunRecord,
-        ) => {
-          await writeStore(dir, findings, diff, runRecord, 14);
-        },
-      );
-
-      // Spy on notifier
-      const notifySpy = vi.fn(async () => {});
-
-      await runAppMock(
-        appDef,
-        { configData: { threshold: 1 }, dataDir: tmpDir },
-        {
-          writeStoreOverride: writeStoreSpy,
-          notifyOverride: notifySpy,
-        },
-      );
-
-      // Verify store was written
-      expect(writeStoreSpy).toHaveBeenCalled();
-      const [dir, findings, diff, runRecord] = writeStoreSpy.mock.calls[0];
-
-      // Verify findings
-      expect(findings).toHaveLength(3);
-      expect(findings.find((f) => f.id === 'vuln-1')?.status).toBe('confirmed'); // In both sources
-      expect(findings.find((f) => f.id === 'vuln-2')?.status).toBe('ghost'); // Only in source1
-      expect(findings.find((f) => f.id === 'vuln-3')?.status).toBe('ghost'); // Only in source2
-
-      // Verify diff
-      expect(diff.appeared).toContain('vuln-1');
-      expect(diff.appeared).toContain('vuln-2');
-      expect(diff.appeared).toContain('vuln-3');
-
-      // Verify run record
-      expect(runRecord.confirmedCount).toBe(1);
-      expect(runRecord.ghostCount).toBe(2);
-      expect(runRecord.errorSources).toEqual([]);
-
-      // Verify notifier was called
-      expect(notifySpy).toHaveBeenCalled();
-    });
+  it('resolves a vanished finding once and keeps its resolvedAt on later runs', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T1);
+    await run({ items: {} }, T2);
+    expect((await findingsById()).a.resolvedAt).toBe(T2);
+    await run({ items: {} }, T3);
+    expect((await findingsById()).a.resolvedAt).toBe(T2);
+    const history = await readData<Array<{ resolved: string[] }>>('history.json');
+    expect(history.map((h) => h.resolved)).toEqual([[], ['a'], []]);
   });
 
-  describe('Test 2: One source fails — stale carry-forward', () => {
-    it('preserves errored source contributions with staleError', async () => {
-      const configSchema = z.object({});
-
-      // First, write some previous findings to the store
-      const prevFindings: Finding[] = [
-        {
-          id: 'vuln-1',
-          title: 'Vulnerability 1',
-          summary: 'Summary',
-          severity: 'high',
-          status: 'confirmed',
-          sources: ['source1', 'source2'],
-          evidence: [
-            { sourceName: 'source1', text: 'Found by source 1' },
-            { sourceName: 'source2', text: 'Found by source 2' },
-          ],
-          firstSeen: '2024-01-01T00:00:00Z',
-          lastSeen: '2024-01-02T00:00:00Z',
-        },
-        {
-          id: 'vuln-2',
-          title: 'Issue 2',
-          summary: 'Summary',
-          severity: 'medium',
-          status: 'ghost',
-          sources: ['source2'],
-          evidence: [{ sourceName: 'source2', text: 'Found by source 2' }],
-          firstSeen: '2024-01-01T00:00:00Z',
-          lastSeen: '2024-01-02T00:00:00Z',
-        },
-      ];
-
-      const prevDiff: DiffResult = {
-        appeared: ['vuln-1', 'vuln-2'],
-        still: [],
-        resolved: [],
-        promoted: [],
-        demoted: [],
-      };
-
-      const prevRunRecord: RunRecord = {
-        runAt: '2024-01-02T00:00:00Z',
-        confirmedCount: 1,
-        ghostCount: 1,
-        resolvedCount: 0,
-        errorSources: [],
-      };
-
-      await writeStore(tmpDir, prevFindings, prevDiff, prevRunRecord, 14);
-
-      // Now create an app where source2 will fail
-      const appDef = {
-        sources: [
-          async () => ({
-            sourceName: 'source1',
-            findings: [{ id: 'vuln-1', title: 'Vulnerability 1' }],
-            fetchedAt: new Date().toISOString(),
-          }),
-          async () => {
-            throw new Error('Connection timeout');
-          },
-        ],
-        rules: (results: SourceResult[]) => {
-          const findings: any[] = [];
-          for (const result of results) {
-            for (const item of result.findings) {
-              findings.push({
-                id: item.id,
-                title: item.title,
-                summary: `Summary of ${item.title}`,
-                severity: 'high',
-              });
-            }
-          }
-          return findings;
-        },
-        configSchema,
-        theme: { name: 'Test', tagline: 'Test', accentColor: '#000' },
-      };
-
-      const writeStoreSpy = vi.fn(
-        async (
-          dir: string,
-          findings: Finding[],
-          diff: DiffResult,
-          runRecord: RunRecord,
-        ) => {
-          await writeStore(dir, findings, diff, runRecord, 14);
-        },
-      );
-
-      // Mock readStore to override for this test
-      const readStoreOverride = async () => ({
-        findings: prevFindings,
-        history: [],
-        runs: [],
-      });
-
-      await runAppMock(
-        appDef,
-        { configData: {}, dataDir: tmpDir },
-        {
-          readStoreOverride,
-          writeStoreOverride: writeStoreSpy,
-        },
-      );
-
-      const [_, findings, diff, runRecord] = writeStoreSpy.mock.calls[0];
-
-      // Verify stale carry-forward
-      expect(findings.find((f) => f.id === 'vuln-1')).toBeDefined();
-      expect(findings.find((f) => f.id === 'vuln-2')).toBeDefined();
-
-      // Check staleError on vuln-2 evidence
-      const vuln2 = findings.find((f) => f.id === 'vuln-2')!;
-      expect(vuln2.evidence.some((e) => e.staleError)).toBe(true);
-
-      // Read back the store to verify stale was derived and written
-      const result = await readStore(tmpDir);
-      const vuln2FromStore = result.findings.find((f) => f.id === 'vuln-2')!;
-      expect(vuln2FromStore.stale).toBe(true);
-
-      // Verify run record has errored source
-      expect(runRecord.errorSources).toContain('source2');
-    });
+  it('reports a resolved finding that comes back as appeared and clears its resolvedAt', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T1);
+    await run({ items: {} }, T2);
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T3);
+    const f = await findingsById();
+    expect('resolvedAt' in f.a).toBe(false);
+    expect(f.a.firstSeen).toBe(T1);
+    expect(f.a.lastSeen).toBe(T3);
+    const history = await readData<Array<{ appeared: string[] }>>('history.json');
+    expect(history[2].appeared).toEqual(['a']);
   });
 
-  describe('Test 3: All sources fail — cascade', () => {
-    it('writes only runs.json and throws', async () => {
-      const configSchema = z.object({});
-
-      // Write some previous findings
-      const prevFindings: Finding[] = [
-        {
-          id: 'vuln-1',
-          title: 'Vulnerability 1',
-          summary: 'Summary',
-          severity: 'high',
-          status: 'confirmed',
-          sources: ['source1'],
-          evidence: [{ sourceName: 'source1', text: 'Found' }],
-          firstSeen: '2024-01-01T00:00:00Z',
-          lastSeen: '2024-01-02T00:00:00Z',
-        },
-      ];
-
-      const prevDiff: DiffResult = {
-        appeared: ['vuln-1'],
-        still: [],
-        resolved: [],
-        promoted: [],
-        demoted: [],
-      };
-
-      const prevRunRecord: RunRecord = {
-        runAt: '2024-01-02T00:00:00Z',
-        confirmedCount: 1,
-        ghostCount: 0,
-        resolvedCount: 0,
-        errorSources: [],
-      };
-
-      await writeStore(tmpDir, prevFindings, prevDiff, prevRunRecord, 14);
-
-      // Create app where all sources fail
-      const appDef = {
-        sources: [
-          async () => {
-            throw new Error('Network error');
-          },
-          async () => {
-            throw new Error('API error');
-          },
-        ],
-        rules: () => [],
-        configSchema,
-        theme: { name: 'Test', tagline: 'Test', accentColor: '#000' },
-      };
-
-      const writeStoreSpy = vi.fn(
-        async (
-          dir: string,
-          findings: Finding[],
-          diff: DiffResult,
-          runRecord: RunRecord,
-        ) => {
-          await writeStore(dir, findings, diff, runRecord, 14);
-        },
-      );
-
-      const readStoreOverride = async () => ({
-        findings: prevFindings,
-        history: [],
-        runs: [],
-      });
-
-      // Should throw
-      await expect(
-        runAppMock(
-          appDef,
-          { configData: {}, dataDir: tmpDir },
-          {
-            readStoreOverride,
-            writeStoreOverride: writeStoreSpy,
-          },
-        ),
-      ).rejects.toThrow('All sources failed');
-
-      // Verify store write was called (for runs.json)
-      expect(writeStoreSpy).toHaveBeenCalled();
-
-      const [_, findings, __] = writeStoreSpy.mock.calls[0];
-
-      // Verify findings.json should not be updated (still contains previous findings)
-      // In this test, we're verifying the app throws before writing new findings
-      expect(findings).toEqual(prevFindings);
-    });
+  it('purges resolved findings older than the retention window', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T1);
+    await run({ items: {} }, T2);
+    await run({ items: {} }, '2026-11-16T00:00:00.000Z');
+    expect((await findingsById()).a).toBeDefined();
+    await run({ items: {} }, '2026-11-16T00:00:01.000Z');
+    expect((await findingsById()).a).toBeUndefined();
   });
 
-  describe('Test 4: Config validation failure', () => {
-    it('writes to stderr and throws before touching store', async () => {
-      const configSchema = z.object({
-        required_field: z.string(),
-      });
+  it('carries an erroring source previous evidence forward with its error', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T1);
+    await run({ items: { alpha: ['a'] }, failing: ['beta'] }, T2);
+    const f = await findingsById();
+    expect(f.a.status).toBe('confirmed');
+    expect(f.a.stale).toBe(true);
+    const beta = f.a.evidence.find((e) => e.sourceName === 'beta');
+    expect(beta?.text).toBe('a seen by beta');
+    expect(beta?.staleError).toBe('beta is down');
+    expect(f.a.evidence.find((e) => e.sourceName === 'alpha')?.staleError).toBeUndefined();
+    const runs = await readData<Array<{ errorSources: string[] }>>('runs.json');
+    expect(runs[1].errorSources).toEqual(['beta']);
+  });
 
-      const appDef = {
-        sources: [async () => ({ sourceName: 'source1', findings: [], fetchedAt: '' })],
-        rules: () => [],
-        configSchema,
-        theme: { name: 'Test', tagline: 'Test', accentColor: '#000' },
-      };
+  it('does not revive a resolved finding from an erroring source', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T1);
+    await run({ items: { alpha: ['x'], beta: ['x'] } }, T2);
+    await run({ items: { alpha: ['x'] }, failing: ['beta'] }, T3);
+    const f = await findingsById();
+    expect(f.a.resolvedAt).toBe(T2);
+    expect(f.x.status).toBe('confirmed');
+  });
 
-      const writeStoreSpy = vi.fn();
-      const stderrSpy = vi.spyOn(process.stderr, 'write');
+  it('writes only runs.json and throws when every source fails', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T1);
+    const before = await fs.readFile(path.join(dir, 'data', 'findings.json'), 'utf-8');
+    await expect(run({ items: {}, failing: ['alpha', 'beta'] }, T2)).rejects.toThrow(/All sources failed/);
+    expect(await fs.readFile(path.join(dir, 'data', 'findings.json'), 'utf-8')).toBe(before);
+    expect(await readData<unknown[]>('history.json')).toHaveLength(1);
+    const runs = await readData<Array<{ errorSources: string[] }>>('runs.json');
+    expect(runs).toHaveLength(2);
+    expect(runs[1].errorSources.sort()).toEqual(['alpha', 'beta']);
+  });
 
-      // Should throw with invalid config
-      await expect(
-        runAppMock(
-          appDef,
-          { configData: { invalid: true }, dataDir: tmpDir },
-          {
-            writeStoreOverride: writeStoreSpy,
-          },
-        ),
-      ).rejects.toThrow('Config validation failed');
+  it('passes repo and caps from the config to the notifier with the dry-run flag', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] }, repo: 'me/app', maxNewIssues: 2, maxNewPRs: 1 }, T1);
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(notify).mock.calls[0][2]).toEqual({ dryRun: true, repo: 'me/app', maxNewIssues: 2, maxNewPRs: 1 });
+    await run({ items: { alpha: ['a'], beta: ['a'] } }, T2, { dryRun: false });
+    expect(vi.mocked(notify).mock.calls[1][2]).toEqual({ dryRun: false });
+  });
 
-      // Verify error was written to stderr
-      expect(stderrSpy).toHaveBeenCalled();
-      const stderrCall = stderrSpy.mock.calls[0]?.[0];
-      expect(stderrCall).toContain('Config validation failed');
-
-      // Verify store was not written
-      expect(writeStoreSpy).not.toHaveBeenCalled();
-
-      stderrSpy.mockRestore();
-    });
+  it('rejects an invalid config and names the failing field on stderr', async () => {
+    const stderr = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await expect(run({ items: 'nope' }, T1)).rejects.toThrow(/Config validation failed/);
+    expect(stderr.mock.calls.flat().join('\n')).toContain('"items"');
+    await expect(fs.access(path.join(dir, 'data', 'findings.json'))).rejects.toThrow();
   });
 });

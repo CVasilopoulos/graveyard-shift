@@ -19,6 +19,26 @@ export interface RunnerOptions {
 }
 
 /**
+ * Options passed to the notifier.
+ */
+interface NotifierOptions {
+  repo?: string;
+  dryRun?: boolean;
+  maxNewIssues?: number;
+  maxNewPRs?: number;
+}
+
+function notifierConfig(config: unknown): Omit<NotifierOptions, 'dryRun'> {
+  if (typeof config !== 'object' || config === null) return {};
+  const c = config as Record<string, unknown>;
+  return {
+    ...(typeof c.repo === 'string' ? { repo: c.repo } : {}),
+    ...(typeof c.maxNewIssues === 'number' ? { maxNewIssues: c.maxNewIssues } : {}),
+    ...(typeof c.maxNewPRs === 'number' ? { maxNewPRs: c.maxNewPRs } : {}),
+  };
+}
+
+/**
  * Orchestrates the full app cycle:
  * 1. Config validation
  * 2. Fetch sources concurrently
@@ -30,7 +50,6 @@ export interface RunnerOptions {
  * 8. Notify
  *
  * @throws On config validation failure, when all sources fail, or on any I/O error
- * @throws When notify fails (if not dryRun)
  */
 export async function runApp<TSchema extends z.ZodTypeAny>(
   appDef: AppDefinition<TSchema>,
@@ -127,6 +146,7 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
 
   // Read previous store for stale carry-forward and timestamp management
   const prevStore = await readStore(opts.dataDir);
+  const prevActive = prevStore.findings.filter((f) => !f.resolvedAt);
 
   // 3. Stale carry-forward
   const erroredSourceMap = new Map(erroredSources.map((e) => [e.name, e.error]));
@@ -135,7 +155,7 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
   for (const { name: erroredName } of erroredSources) {
     const staleFindings: Array<{ id: string; title: string }> = [];
 
-    for (const prevFinding of prevStore.findings) {
+    for (const prevFinding of prevActive) {
       if (prevFinding.sources.includes(erroredName)) {
         // Find the evidence entry from this source in the previous finding
         const prevEvidence = prevFinding.evidence.find((e) => e.sourceName === erroredName);
@@ -175,13 +195,6 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
     // Determine firstSeen: from previous store or now
     const firstSeen = prevFinding?.firstSeen ?? now;
 
-    // Determine resolvedAt: cleared if reappearing, otherwise unchanged
-    let resolvedAt = prevFinding?.resolvedAt;
-    if (finding.status === 'ghost' && prevFinding?.status === 'confirmed') {
-      // Demoted from confirmed to ghost; clear resolvedAt if it was set
-      resolvedAt = undefined;
-    }
-
     // Build evidence entries with staleError for errored sources
     const evidence = finding.evidence.map((e) => {
       const staleError = erroredSourceMap.get(e.sourceName);
@@ -204,7 +217,6 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
       evidence,
       firstSeen,
       lastSeen: now,
-      resolvedAt,
       url: finding.url,
       fix: finding.fix,
       edits: finding.edits,
@@ -213,11 +225,13 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
 
   // 7. Diff and store
   // Compute diff between prev and current findings
-  const diff = computeDiff(prevStore.findings, currentFindings);
+  const diff = computeDiff(prevActive, currentFindings);
 
   // For findings that moved into the resolved set, set resolvedAt to now
   const resolvedIds = new Set(diff.resolved);
-  const resolvedFindings = prevStore.findings
+  const currentIds = new Set(currentFindings.map((f) => f.id));
+  const stillResolved = prevStore.findings.filter((f) => f.resolvedAt && !currentIds.has(f.id));
+  const resolvedFindings = prevActive
     .filter((f) => resolvedIds.has(f.id))
     .map((f) => ({
       ...f,
@@ -226,7 +240,7 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
     }));
 
   // Combine current and resolved findings for storage
-  const allFinalFindings = [...currentFindings, ...resolvedFindings];
+  const allFinalFindings = [...currentFindings, ...resolvedFindings, ...stillResolved];
 
   // Count statuses for run record
   const confirmedCount = currentFindings.filter((f) => f.status === 'confirmed').length;
@@ -243,16 +257,14 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
 
   await writeStore(opts.dataDir, allFinalFindings, diff, runRecord, retentionDays);
 
-  // 8. Notify (unless dryRun) — notifier will be implemented separately
-  // When notifier is available, uncomment:
-  // if (!opts.dryRun) {
-  //   try {
-  //     const { notify } = await import('../notify/notifier.js');
-  //     await notify(diff, allFinalFindings, { dryRun: opts.dryRun });
-  //   } catch (err) {
-  //     // Notifier errors should not fail the run, but log them
-  //     console.error(`Notifier error: ${err instanceof Error ? err.message : String(err)}`);
-  //     // Don't throw — the store has already been written
-  //   }
-  // }
+  // 8. Notify
+  try {
+    const { notify } = await import('../notify/notifier.js');
+    const notifierOptions: NotifierOptions = { dryRun: opts.dryRun ?? false, ...notifierConfig(config) };
+    await notify(diff, allFinalFindings, notifierOptions);
+  } catch (err) {
+    // Notifier errors should not fail the run, but log them
+    console.error(`Notifier error: ${err instanceof Error ? err.message : String(err)}`);
+    // Don't throw — the store has already been written
+  }
 }

@@ -1,215 +1,233 @@
 /* Graveyard Shift Dashboard Stylesheet */
 
+/* CSS Custom Properties for theming */
 :root {
-  /* Theme colors - customizable via theme.json */
-  --accent-color: #6b21a8;
-  --label-confirmed: "Haunted";
+  /* Accent and status labels */
+  --accent-color: #8b5cf6;
+  --label-confirmed: "Confirmed";
   --label-ghost: "Ghost";
-  --label-resolved: "Laid to Rest";
+  --label-resolved: "Resolved";
 
-  /* Base colors - light mode defaults (WCAG AA compliant) */
+  /* Light mode (default) colors with WCAG AA contrast ratios */
   --bg: #ffffff;
-  --text: #1f2937;
-  --border: #d1d5db;
-  --border-muted: #e5e7eb;
+  --text: #1a1a1a;
+  --border: #e0e0e0;
+  --text-secondary: #555555;
 
-  /* Status label styling */
-  --confirmed-bg: #dcfce7;
-  --confirmed-text: #166534;
-  --confirmed-border: #22c55e;
+  /* Status indicators */
+  --confirmed-border: #047857;
+  --confirmed-text: #065f46;
+  --ghost-border: #a16207;
+  --ghost-text: #b45309;
+  --resolved-border: #7c3aed;
+  --resolved-text: #6d28d9;
 
-  --ghost-bg: #f3e8ff;
-  --ghost-text: #6b21a8;
-  --ghost-border: #a855f7;
+  /* Severity colors with accessible contrast */
+  --severity-critical-bg: #dc2626;
+  --severity-critical-text: #ffffff;
+  --severity-high-bg: #ea580c;
+  --severity-high-text: #ffffff;
+  --severity-medium-bg: #f59e0b;
+  --severity-medium-text: #1a1a1a;
+  --severity-low-bg: #3b82f6;
+  --severity-low-text: #ffffff;
+  --severity-info-bg: #06b6d4;
+  --severity-info-text: #ffffff;
 
-  --resolved-bg: #fee2e2;
-  --resolved-text: #7c2d12;
-  --resolved-border: #ef4444;
-
-  /* Severity colors (WCAG AA: ≥3:1 contrast for UI components) */
-  --critical-bg: #7f1d1d;
-  --critical-text: #fecaca;
-
-  --high-bg: #92400e;
-  --high-text: #fde047;
-
-  --medium-bg: #284e0a;
-  --medium-text: #bfef45;
-
-  --low-bg: #042f2e;
-  --low-text: #67e8f9;
-
-  --info-bg: #0c4a6e;
-  --info-text: #93c5fd;
-
-  /* UI elements */
-  --input-border: #9ca3af;
-  --input-focus: #3b82f6;
-  --button-bg: var(--accent-color);
-  --button-text: #ffffff;
+  /* Filter and interactive elements */
+  --input-border: #999999;
+  --input-focus: #0066cc;
+  --count-bg: #f3f4f6;
+  --count-border: #d1d5db;
 }
 
-/* Dark mode overrides (WCAG AA compliant) */
+/* Dark mode support */
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Base colors - dark mode */
-    --bg: #1f2937;
-    --text: #f3f4f6;
-    --border: #4b5563;
-    --border-muted: #374151;
+    --bg: #1a1a1a;
+    --text: #f0f0f0;
+    --border: #404040;
+    --text-secondary: #c0c0c0;
 
-    /* Status label styling */
-    --confirmed-bg: #064e3b;
+    /* Status indicators for dark mode */
+    --confirmed-border: #10b981;
     --confirmed-text: #86efac;
-    --confirmed-border: #16a34a;
+    --ghost-border: #f59e0b;
+    --ghost-text: #fcd34d;
+    --resolved-border: #a78bfa;
+    --resolved-text: #d8b4fe;
 
-    --ghost-bg: #3730a3;
-    --ghost-text: #e9d5ff;
-    --ghost-border: #7c3aed;
+    /* Severity colors adjusted for dark mode */
+    --severity-critical-bg: #991b1b;
+    --severity-critical-text: #fecaca;
+    --severity-high-bg: #b45309;
+    --severity-high-text: #fdba74;
+    --severity-medium-bg: #d97706;
+    --severity-medium-text: #fef3c7;
+    --severity-low-bg: #1e40af;
+    --severity-low-text: #bfdbfe;
+    --severity-info-bg: #0e7490;
+    --severity-info-text: #a5f3fc;
 
-    --resolved-bg: #7f1d1d;
-    --resolved-text: #fca5a5;
-    --resolved-border: #dc2626;
-
-    /* Severity colors */
-    --critical-bg: #1f2937;
-    --critical-text: #fca5a5;
-
-    --high-bg: #1f2937;
-    --high-text: #fcd34d;
-
-    --medium-bg: #1f2937;
-    --medium-text: #bfef45;
-
-    --low-bg: #1f2937;
-    --low-text: #67e8f9;
-
-    --info-bg: #1f2937;
-    --info-text: #93c5fd;
-
-    /* UI elements */
-    --input-border: #6b7280;
-    --input-focus: #60a5fa;
-    --button-bg: var(--accent-color);
-    --button-text: #ffffff;
+    /* Filter and interactive elements */
+    --input-border: #666666;
+    --input-focus: #5b99ff;
+    --count-bg: #2a2a2a;
+    --count-border: #404040;
   }
 }
 
 /* Reset and base styles */
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
 html {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  line-height: 1.5;
-  color: var(--text);
-  background-color: var(--bg);
+  font-size: 16px;
+  scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
-  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background-color: var(--bg);
   color: var(--text);
+  line-height: 1.6;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 /* Typography */
-h1, h2, h3 {
-  margin: 0.5em 0;
-  font-weight: 600;
-}
-
 h1 {
-  font-size: 2rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
   line-height: 1.2;
 }
 
 h2 {
-  font-size: 1.5rem;
+  font-size: 1.875rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
 }
 
 h3 {
   font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
 }
 
 p {
-  margin: 0.5em 0;
+  margin-bottom: 1rem;
 }
 
-/* Links */
+strong {
+  font-weight: 600;
+}
+
 a {
   color: var(--accent-color);
   text-decoration: none;
-  border-bottom: 1px solid currentColor;
+  transition: opacity 0.2s;
 }
 
-a:hover,
-a:focus {
+a:hover {
+  text-decoration: underline;
   opacity: 0.8;
 }
 
-/* Layout */
+a:focus {
+  outline: 2px solid var(--input-focus);
+  outline-offset: 2px;
+}
+
+/* Header */
 header {
-  padding: 2rem 1rem;
   background-color: var(--accent-color);
   color: #ffffff;
-  border-bottom: 1px solid var(--border);
+  padding: 2rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
+  margin-bottom: 0.25rem;
+}
+
+header .tagline {
+  font-size: 1.125rem;
+  opacity: 0.95;
   margin: 0;
 }
 
+/* Main layout */
 main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 0 1.5rem 2rem;
 }
 
 section {
-  margin-bottom: 3rem;
+  margin-bottom: 2.5rem;
 }
 
-section:last-child {
-  margin-bottom: 0;
-}
-
-/* Filter control */
-fieldset {
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
+/* Filter section */
+#filter-section {
+  background-color: var(--count-bg);
+  border: 1px solid var(--count-border);
+  border-radius: 8px;
   padding: 1.5rem;
+}
+
+fieldset {
+  border: none;
+  padding: 0;
   margin: 0;
 }
 
 legend {
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  display: block;
 }
 
-fieldset label {
+label {
   display: inline-flex;
   align-items: center;
   margin-right: 1.5rem;
   margin-bottom: 0.5rem;
   cursor: pointer;
+  user-select: none;
 }
 
-fieldset input[type="radio"] {
+label:focus-within {
+  outline: 2px solid var(--input-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+input[type="radio"] {
   margin-right: 0.5rem;
   cursor: pointer;
-  width: 1rem;
-  height: 1rem;
   accent-color: var(--accent-color);
+  width: 20px;
+  height: 20px;
 }
 
-fieldset input[type="radio"]:focus {
+input[type="radio"]:focus {
   outline: 2px solid var(--input-focus);
   outline-offset: 2px;
 }
 
-/* Aggregate counts */
+/* Counts section */
+#counts-section {
+  margin-bottom: 2rem;
+}
+
 .counts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -217,19 +235,21 @@ fieldset input[type="radio"]:focus {
 }
 
 .count-item {
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  background-color: var(--count-bg);
+  border: 2px solid var(--count-border);
+  border-radius: 8px;
+  padding: 1.5rem;
   text-align: center;
-  background-color: var(--bg);
 }
 
 .count-label {
   display: block;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
   font-size: 0.875rem;
-  color: var(--text);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .count-value {
@@ -239,346 +259,434 @@ fieldset input[type="radio"]:focus {
   color: var(--accent-color);
 }
 
-/* Findings list */
+/* Findings section */
+#findings-section {
+  margin-bottom: 2rem;
+}
+
 #findings-list {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 1.5rem;
 }
 
+/* Finding card base styles */
 .finding {
-  border-left: 5px solid;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   padding: 1.5rem;
-  background-color: var(--bg);
-  border: 1px solid var(--border);
-  border-left-width: 5px;
+  background-color: var(--count-bg);
+  border-left: 6px solid var(--border);
+  transition: box-shadow 0.2s, transform 0.2s;
 }
 
-.finding.confirmed {
+.finding:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Status-specific styling: left border + distinct visual indicator */
+.finding-confirmed {
   border-left-color: var(--confirmed-border);
-  border-left-style: solid;
 }
 
-.finding.ghost {
+.finding-ghost {
   border-left-color: var(--ghost-border);
-  border-left-style: dashed;
+  opacity: 0.85;
 }
 
-.finding.resolved {
+.finding-resolved {
   border-left-color: var(--resolved-border);
-  border-left-style: dotted;
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
+/* Finding header */
 .finding-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-  gap: 1rem;
   flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: flex-start;
 }
 
-.finding-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+.finding-header h3 {
+  flex: 1 1 auto;
   margin: 0;
-  flex: 1;
+  word-break: break-word;
   min-width: 200px;
 }
 
-.finding-badges {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: center;
+/* Severity badges */
+.severity {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+.severity-critical {
+  background-color: var(--severity-critical-bg);
+  color: var(--severity-critical-text);
 }
 
-/* Status badges - with text label AND distinct styling */
-.badge.status {
-  font-weight: 600;
-  border: 1px solid;
+.severity-high {
+  background-color: var(--severity-high-bg);
+  color: var(--severity-high-text);
 }
 
-.badge.confirmed {
-  background-color: var(--confirmed-bg);
+.severity-medium {
+  background-color: var(--severity-medium-bg);
+  color: var(--severity-medium-text);
+}
+
+.severity-low {
+  background-color: var(--severity-low-bg);
+  color: var(--severity-low-text);
+}
+
+.severity-info {
+  background-color: var(--severity-info-bg);
+  color: var(--severity-info-text);
+}
+
+/* Status badges - non-colour visual indicator with label */
+.status {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.status-confirmed {
+  background-color: #dcfce7;
   color: var(--confirmed-text);
-  border-color: var(--confirmed-border);
+  border: 1px solid var(--confirmed-border);
+  border-left: 3px solid var(--confirmed-border);
 }
 
-.badge.ghost {
-  background-color: var(--ghost-bg);
+.status-ghost {
+  background-color: #fef3c7;
   color: var(--ghost-text);
-  border-color: var(--ghost-border);
+  border: 1px solid var(--ghost-border);
+  border-left: 3px solid var(--ghost-border);
 }
 
-.badge.resolved {
-  background-color: var(--resolved-bg);
+.status-resolved {
+  background-color: #ede9fe;
   color: var(--resolved-text);
-  border-color: var(--resolved-border);
+  border: 1px solid var(--resolved-border);
+  border-left: 3px solid var(--resolved-border);
 }
 
-/* Status badge pseudo-element for icon/indication */
-.badge.confirmed::before {
-  content: "✓";
-  margin-right: 0.25rem;
-  font-weight: 700;
+/* Dark mode status badges */
+@media (prefers-color-scheme: dark) {
+  .status-confirmed {
+    background-color: #064e3b;
+  }
+
+  .status-ghost {
+    background-color: #78350f;
+  }
+
+  .status-resolved {
+    background-color: #4c1d95;
+  }
 }
 
-.badge.ghost::before {
-  content: "👻";
-  margin-right: 0.25rem;
-}
-
-.badge.resolved::before {
-  content: "✗";
-  margin-right: 0.25rem;
-  font-weight: 700;
-}
-
-/* Severity badges - colour + text */
-.badge.severity {
-  border: none;
+/* Finding summary */
+.finding-summary {
+  margin-bottom: 1rem;
   color: var(--text);
+}
+
+/* Finding sources */
+.finding-sources {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: var(--bg);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.finding-sources strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.finding-sources ul {
+  list-style: none;
+  padding-left: 1.25rem;
+}
+
+.finding-sources li {
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  position: relative;
+}
+
+.finding-sources li:before {
+  content: "•";
+  position: absolute;
+  left: -1rem;
+}
+
+/* Finding URL link */
+.finding-url {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.finding-url:hover {
+  opacity: 0.9;
+  text-decoration: none;
+}
+
+.finding-url:focus {
+  outline: 2px solid var(--input-focus);
+  outline-offset: 2px;
+}
+
+/* Finding fix section */
+.finding-fix {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background-color: var(--bg);
+  border-radius: 4px;
+  border-left: 3px solid var(--accent-color);
+  font-size: 0.875rem;
+}
+
+.finding-fix strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Stale indicator */
+.stale-indicator {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #fef3c7;
+  color: #92400e;
+  border-left: 3px solid var(--ghost-border);
+  border-radius: 4px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
-.badge.critical {
-  background-color: var(--critical-bg);
-  color: var(--critical-text);
+@media (prefers-color-scheme: dark) {
+  .stale-indicator {
+    background-color: #78350f;
+    color: #fcd34d;
+  }
 }
 
-.badge.high {
-  background-color: var(--high-bg);
-  color: var(--high-text);
+/* Last run section */
+#last-run-section {
+  background-color: var(--count-bg);
+  border: 1px solid var(--count-border);
+  border-radius: 8px;
+  padding: 1.5rem;
 }
 
-.badge.medium {
-  background-color: var(--medium-bg);
-  color: var(--medium-text);
+#last-run-info h2 {
+  margin-bottom: 1rem;
 }
 
-.badge.low {
-  background-color: var(--low-bg);
-  color: var(--low-text);
-}
-
-.badge.info {
-  background-color: var(--info-bg);
-  color: var(--info-text);
-}
-
-/* Finding content */
-.finding-summary {
-  margin: 1rem 0;
-  line-height: 1.6;
-}
-
-.finding-sources {
-  margin: 1rem 0;
-}
-
-.sources-label {
-  font-weight: 600;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-.source-list {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.source-list li {
-  padding: 0.25rem 0.75rem;
-  background-color: var(--border-muted);
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-}
-
-/* Last run info */
-#last-run-info {
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  background-color: var(--bg);
-  font-size: 0.875rem;
-}
-
-.last-run-timestamp {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+.last-run p {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
 }
 
 .error-sources {
-  margin-top: 0.5rem;
-}
-
-.error-sources strong {
   color: #dc2626;
+  font-weight: 500;
 }
 
-/* Error messages */
+@media (prefers-color-scheme: dark) {
+  .error-sources {
+    color: #fca5a5;
+  }
+}
+
+/* Empty state */
+.empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  background-color: var(--count-bg);
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  grid-column: 1 / -1;
+}
+
+/* Error banner */
 .error-banner {
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+  padding: 1.5rem;
   background-color: #fee2e2;
-  color: #7c2d12;
-  border: 1px solid #fca5a5;
-  border-radius: 0.5rem;
+  color: #991b1b;
   border-left: 4px solid #dc2626;
+  border-radius: 4px;
+  font-weight: 500;
+  grid-column: 1 / -1;
 }
 
 @media (prefers-color-scheme: dark) {
   .error-banner {
     background-color: #7f1d1d;
-    color: #fca5a5;
-    border-color: #991b1b;
+    color: #fecaca;
+    border-left-color: #f87171;
   }
 }
 
-.error-banner strong {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-/* Empty state */
-.empty-state {
-  padding: 2rem;
-  text-align: center;
-  color: var(--text);
-  border: 1px dashed var(--border);
-  border-radius: 0.5rem;
-  background-color: var(--bg);
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-/* Responsive */
+/* Responsive design */
 @media (max-width: 768px) {
-  header {
-    padding: 1.5rem 1rem;
+  body {
+    font-size: 15px;
   }
 
-  header h1 {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
     font-size: 1.5rem;
   }
 
-  main {
+  header {
     padding: 1.5rem 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  main {
+    padding: 0 1rem 1.5rem;
+  }
+
+  .counts {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  #findings-list {
+    grid-template-columns: 1fr;
   }
 
   .finding-header {
     flex-direction: column;
   }
 
-  .finding-badges {
-    width: 100%;
+  .finding-header h3 {
+    min-width: auto;
   }
 
-  fieldset label {
+  label {
     display: flex;
+    align-items: center;
     margin-right: 1rem;
-  }
-
-  .counts {
-    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 0.75rem;
   }
 }
 
 @media (max-width: 480px) {
-  header {
-    padding: 1rem 1rem;
+  html {
+    font-size: 14px;
   }
 
-  header h1 {
-    font-size: 1.25rem;
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  header {
+    padding: 1rem;
+    margin-bottom: 1rem;
   }
 
   main {
+    padding: 0 0.75rem 1rem;
+  }
+
+  section {
+    margin-bottom: 1.5rem;
+  }
+
+  #filter-section,
+  #counts-section,
+  #last-run-section {
     padding: 1rem;
-  }
-
-  h2 {
-    font-size: 1.25rem;
-  }
-
-  fieldset {
-    padding: 1rem;
-  }
-
-  fieldset label {
-    display: block;
-    margin-right: 0;
-    margin-bottom: 0.75rem;
-  }
-
-  .finding {
-    padding: 1rem;
-  }
-
-  .finding-title {
-    font-size: 1.1rem;
-  }
-
-  .count-value {
-    font-size: 1.5rem;
   }
 
   .counts {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
   }
 
-  .count-item {
-    padding: 0.75rem;
+  .finding {
+    padding: 1rem;
+  }
+
+  .finding-header {
+    gap: 0.5rem;
+  }
+
+  .severity,
+  .status {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  label {
+    font-size: 0.9rem;
+    margin-right: 0.75rem;
+  }
+
+  input[type="radio"] {
+    width: 18px;
+    height: 18px;
   }
 }
 
-/* High contrast mode support */
-@media (prefers-contrast: more) {
-  .finding {
-    border-width: 2px;
-  }
-
-  .badge {
-    border-width: 2px;
-  }
-
-  fieldset {
-    border-width: 2px;
-  }
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--input-focus);
+  outline-offset: 2px;
 }
 
 /* Print styles */
 @media print {
-  header {
-    background-color: var(--accent-color);
-    color: #ffffff;
+  body {
+    background-color: #ffffff;
+    color: #000000;
   }
 
-  .finding.resolved {
-    opacity: 1;
+  header {
+    page-break-after: avoid;
+  }
+
+  .finding {
+    page-break-inside: avoid;
   }
 
   a {
     color: inherit;
+  }
+
+  a:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
   }
 }

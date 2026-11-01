@@ -41,6 +41,12 @@ describe('stableStringify', () => {
       expect(stableStringify(0)).toBe('0\n');
     });
 
+    it('omits object keys whose value is undefined and writes undefined array items as null, like JSON.stringify', () => {
+      const value = { a: 1, b: undefined, c: [1, undefined] };
+      expect(JSON.parse(stableStringify(value))).toEqual(JSON.parse(JSON.stringify(value)));
+      expect(stableStringify(value)).not.toContain('undefined');
+    });
+
     it('canonicalises -0 to 0', () => {
       expect(stableStringify(-0)).toBe('0\n');
     });
@@ -182,7 +188,7 @@ describe('stableStringify', () => {
     });
   });
 
-  describe('Property 16: Idempotence', () => {
+  describe('Property 15: Idempotence', () => {
     it('idempotence property: stableStringify(JSON.parse(stableStringify(v))) === stableStringify(v)', () => {
       fc.assert(
         fc.property(fc.jsonValue(), (value) => {

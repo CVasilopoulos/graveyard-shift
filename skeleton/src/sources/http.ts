@@ -1,13 +1,11 @@
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { projectUserAgent } from '../core/pkg.js';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface HttpClientOptions {
-  userAgent: string;
+  userAgent?: string;
   timeoutMs?: number;
   maxAttempts?: number;
   concurrencyPerHost?: number;
@@ -17,6 +15,7 @@ export interface HttpRequestOptions {
   timeoutMs?: number;
   maxAttempts?: number;
   headers?: Record<string, string>;
+  userAgent?: string;
 }
 
 export interface HttpClient {
@@ -68,20 +67,6 @@ class Semaphore {
 }
 
 // ============================================================================
-// Version reading and User-Agent construction
-// ============================================================================
-
-function readPackageVersion(): string {
-  const currentFile = fileURLToPath(import.meta.url);
-  const currentDir = dirname(currentFile);
-  const packagePath = join(currentDir, '../../package.json');
-  const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
-  return packageJson.version as string;
-}
-
-const VERSION = readPackageVersion();
-
-// ============================================================================
 // Retry-After parsing
 // ============================================================================
 
@@ -125,10 +110,10 @@ function calculateBackoff(attempt: number): number {
 // ============================================================================
 
 export function createHttpClient(opts: HttpClientOptions): HttpClient {
-  const userAgent = opts.userAgent;
   const defaultTimeoutMs = opts.timeoutMs ?? 30000;
   const defaultMaxAttempts = opts.maxAttempts ?? 3;
   const concurrencyPerHost = opts.concurrencyPerHost ?? 4;
+  const userAgent = opts.userAgent ?? projectUserAgent;
 
   const semaphores = new Map<string, Semaphore>();
 
@@ -143,7 +128,7 @@ export function createHttpClient(opts: HttpClientOptions): HttpClient {
     const timeoutMs = opts?.timeoutMs ?? defaultTimeoutMs;
     const maxAttempts = opts?.maxAttempts ?? defaultMaxAttempts;
     const headers = {
-      'User-Agent': userAgent,
+      'User-Agent': opts?.userAgent ?? userAgent,
       ...(opts?.headers ?? {}),
     };
 

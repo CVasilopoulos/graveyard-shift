@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createHttpClient, HttpError } from '../../src/sources/http.js';
 
@@ -105,6 +106,19 @@ describe('HTTP Client', () => {
 
     await client.get(url);
     expect(capturedHeaders?.['User-Agent']).toBe('test-client/1.0 (+https://github.com/test/repo)');
+  });
+
+  it('defaults the User-Agent to the package name, version and repository URL', async () => {
+    let capturedHeaders: Record<string, string> | undefined;
+    globalThis.fetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      capturedHeaders = init?.headers as Record<string, string>;
+      return new Response('ok', { status: 200 });
+    }) as any;
+    const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf-8'));
+    await createHttpClient({}).get('https://example.com/api');
+    expect(capturedHeaders?.['User-Agent']).toBe(
+      `graveyard-shift/${pkg.version} (+https://github.com/CVasilopoulos/graveyard-shift)`,
+    );
   });
 
   it('should merge custom headers with User-Agent', async () => {

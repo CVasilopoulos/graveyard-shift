@@ -150,45 +150,42 @@ function getFilteredFindings() {
  */
 function createFindingElement(finding) {
   const article = document.createElement('article');
-  article.className = `finding finding-${finding.status}`;
-
-  // Determine status label
-  let statusLabel = 'Ghost';
-  if (finding.resolvedAt) {
-    statusLabel = 'Resolved';
-  } else if (finding.status === 'confirmed') {
-    statusLabel = 'Confirmed';
-  }
-
-  // Build evidence sources list
-  const sourcesList = finding.sources.map(source => {
-    const li = document.createElement('li');
-    li.textContent = source;
-    return li;
-  });
+  
+  // Determine effective status for styling: confirmed/ghost or resolved
+  const effectiveStatus = finding.resolvedAt ? 'resolved' : finding.status;
+  article.className = `finding ${effectiveStatus}`;
 
   // Build HTML content
-  const header = document.createElement('header');
+  const header = document.createElement('div');
   header.className = 'finding-header';
 
   const title = document.createElement('h3');
+  title.className = 'finding-title';
   title.textContent = finding.title;
 
-  const severity = document.createElement('span');
-  severity.className = `severity severity-${finding.severity}`;
-  severity.textContent = finding.severity.toUpperCase();
+  const badges = document.createElement('div');
+  badges.className = 'finding-badges';
 
-  const status = document.createElement('span');
-  status.className = `status status-${finding.status}`;
-  status.textContent = statusLabel;
-
+  // Status badge with custom label
+  const statusBadge = document.createElement('span');
+  statusBadge.className = `badge status ${effectiveStatus}`;
   if (finding.resolvedAt) {
-    status.className = 'status status-resolved';
+    statusBadge.textContent = 'Laid to Rest';
+  } else if (finding.status === 'confirmed') {
+    statusBadge.textContent = 'Haunted';
+  } else {
+    statusBadge.textContent = 'Ghost';
   }
+  badges.appendChild(statusBadge);
+
+  // Severity badge
+  const severityBadge = document.createElement('span');
+  severityBadge.className = `badge severity ${finding.severity}`;
+  severityBadge.textContent = finding.severity.toUpperCase();
+  badges.appendChild(severityBadge);
 
   header.appendChild(title);
-  header.appendChild(severity);
-  header.appendChild(status);
+  header.appendChild(badges);
 
   const summary = document.createElement('p');
   summary.className = 'finding-summary';
@@ -196,10 +193,19 @@ function createFindingElement(finding) {
 
   const sourceSection = document.createElement('div');
   sourceSection.className = 'finding-sources';
-  const sourcesLabel = document.createElement('strong');
-  sourcesLabel.textContent = 'Sources: ';
+  const sourcesLabel = document.createElement('span');
+  sourcesLabel.className = 'sources-label';
+  sourcesLabel.textContent = 'Sources';
+  
   const ul = document.createElement('ul');
-  ul.append(...sourcesList);
+  ul.className = 'source-list';
+  
+  for (const source of finding.sources) {
+    const li = document.createElement('li');
+    li.textContent = source;
+    ul.appendChild(li);
+  }
+  
   sourceSection.appendChild(sourcesLabel);
   sourceSection.appendChild(ul);
 
@@ -214,24 +220,26 @@ function createFindingElement(finding) {
     link.textContent = 'More information';
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    link.className = 'finding-url';
     article.appendChild(link);
   }
 
   // Optional: add fix information
   if (finding.fix) {
-    const fixSection = document.createElement('div');
-    fixSection.className = 'finding-fix';
+    const fixDiv = document.createElement('div');
+    fixDiv.className = 'finding-fix';
+    
     const fixLabel = document.createElement('strong');
     fixLabel.textContent = 'Fix: ';
+    fixDiv.appendChild(fixLabel);
+    
     const fixText = document.createElement('span');
     fixText.textContent = finding.fix.text;
     if (finding.fix.value) {
       fixText.textContent += ` (${finding.fix.value})`;
     }
-    fixSection.appendChild(fixLabel);
-    fixSection.appendChild(fixText);
-    article.appendChild(fixSection);
+    fixDiv.appendChild(fixText);
+    
+    article.appendChild(fixDiv);
   }
 
   // Show stale indicator if applicable
@@ -255,7 +263,7 @@ function renderFindings() {
   if (filtered.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'No findings in this category';
+    empty.innerHTML = '<p>No findings in this category.</p>';
     findingsList.appendChild(empty);
     return;
   }
@@ -280,22 +288,19 @@ function updateLastRunInfo(runs) {
   }
 
   const lastRun = runs[runs.length - 1];
-  const container = document.createElement('div');
-  container.className = 'last-run';
 
   const timestamp = document.createElement('p');
+  timestamp.className = 'last-run-timestamp';
   const date = new Date(lastRun.runAt);
   timestamp.innerHTML = `<strong>Last run:</strong> ${date.toLocaleString()}`;
-  container.appendChild(timestamp);
+  lastRunInfo.appendChild(timestamp);
 
   if (lastRun.errorSources && lastRun.errorSources.length > 0) {
     const errors = document.createElement('p');
     errors.className = 'error-sources';
     errors.innerHTML = `<strong>Errors from:</strong> ${lastRun.errorSources.join(', ')}`;
-    container.appendChild(errors);
+    lastRunInfo.appendChild(errors);
   }
-
-  lastRunInfo.appendChild(container);
 }
 
 /**
@@ -314,7 +319,7 @@ function showError(error) {
     message = `Failed to load findings: ${error.message}`;
   }
 
-  errorBanner.textContent = message;
+  errorBanner.innerHTML = `<strong>Error:</strong> ${message}`;
   findingsList.appendChild(errorBanner);
 }
 

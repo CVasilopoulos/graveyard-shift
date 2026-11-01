@@ -50,8 +50,8 @@ function makeDataLoader(source: DataSource): DataLoader {
           );
           return JSON.parse(content) as Finding[];
         } catch (err) {
-          if (err instanceof SyntaxError || (err instanceof Error && 'code' in err && err.code === 'ENOENT')) {
-            return [];
+          if (err instanceof SyntaxError) {
+            throw new Error(`Invalid JSON in findings.json`);
           }
           throw err;
         }
@@ -65,8 +65,8 @@ function makeDataLoader(source: DataSource): DataLoader {
           );
           return JSON.parse(content) as RunRecord[];
         } catch (err) {
-          if (err instanceof SyntaxError || (err instanceof Error && 'code' in err && err.code === 'ENOENT')) {
-            return [];
+          if (err instanceof SyntaxError) {
+            throw new Error(`Invalid JSON in runs.json`);
           }
           throw err;
         }
@@ -78,27 +78,19 @@ function makeDataLoader(source: DataSource): DataLoader {
   const baseUrl = source.baseUrl.replace(/\/$/, ''); // Remove trailing slash
   return {
     async loadFindings(): Promise<Finding[]> {
-      try {
-        const response = await fetch(`${baseUrl}/findings.json`);
-        if (!response.ok) {
-          return [];
-        }
-        return (await response.json()) as Finding[];
-      } catch {
-        return [];
+      const response = await fetch(`${baseUrl}/findings.json`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
+      return (await response.json()) as Finding[];
     },
 
     async loadRuns(): Promise<RunRecord[]> {
-      try {
-        const response = await fetch(`${baseUrl}/runs.json`);
-        if (!response.ok) {
-          return [];
-        }
-        return (await response.json()) as RunRecord[];
-      } catch {
-        return [];
+      const response = await fetch(`${baseUrl}/runs.json`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
+      return (await response.json()) as RunRecord[];
     },
   };
 }
@@ -126,7 +118,7 @@ const explainFindingInputSchema = {
 /**
  * Create and start the MCP stdio server
  */
-export function createMcpServer(source: DataSource): McpServerHandle {
+export async function createMcpServer(source: DataSource): Promise<McpServerHandle> {
   const server = new McpServer({
     name: 'graveyard-shift',
     version: '0.1.0',
@@ -137,11 +129,35 @@ export function createMcpServer(source: DataSource): McpServerHandle {
   // Tool: list_findings
   server.tool(
     'list_findings',
-    listFindingsInputSchema,
-    async (args: { status?: 'confirmed' | 'ghost' | 'all' }) => {
+    {
+      status: z
+        .enum(['confirmed', 'ghost', 'all'])
+        .default('all')
+        .describe('Filter findings by status: confirmed | ghost | all'),
+    },
+    async (args: unknown) => {
+      // Validate status argument
+      const parseResult = z
+        .object({ status: z.enum(['confirmed', 'ghost', 'all']).optional() })
+        .safeParse(args);
+      if (!parseResult.success) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                code: 'VALIDATION_ERROR',
+                message: `Invalid arguments: ${parseResult.error.issues[0]?.message || 'validation failed'}`,
+              } satisfies McpError),
+            },
+          ],
+          isError: true,
+        };
+      }
+
       try {
         const findings = await dataLoader.loadFindings();
-        const status = args.status ?? 'all';
+        const status = (args as { status?: 'confirmed' | 'ghost' | 'all' })?.status ?? 'all';
 
         const filtered =
           status === 'all'
@@ -165,9 +181,9 @@ export function createMcpServer(source: DataSource): McpServerHandle {
                 code: 'UNAVAILABLE',
                 message: 'Unable to load findings.json',
               } satisfies McpError),
-              isError: true,
             },
           ],
+          isError: true,
         };
       }
     },
@@ -176,11 +192,30 @@ export function createMcpServer(source: DataSource): McpServerHandle {
   // Tool: get_finding
   server.tool(
     'get_finding',
-    getFindingInputSchema,
-    async (args: { id: string }) => {
+    {
+      id: z.string().describe('The finding id'),
+    },
+    async (args: unknown) => {
+      // Validate id argument
+      const parseResult = z.object({ id: z.string() }).safeParse(args);
+      if (!parseResult.success) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                code: 'VALIDATION_ERROR',
+                message: `Invalid id: ${parseResult.error.issues[0]?.message || 'must be a string'}`,
+              } satisfies McpError),
+            },
+          ],
+          isError: true,
+        };
+      }
+
       try {
         const findings = await dataLoader.loadFindings();
-        const finding = findings.find((f) => f.id === args.id);
+        const finding = findings.find((f) => f.id === (args as { id: string }).id);
 
         if (!finding) {
           return {
@@ -189,7 +224,7 @@ export function createMcpServer(source: DataSource): McpServerHandle {
                 type: 'text',
                 text: JSON.stringify({
                   code: 'NOT_FOUND',
-                  message: `Finding not found: ${args.id}`,
+                  message: `Finding not found: ${(args as { id: string }).id}`,
                 } satisfies McpError),
               },
             ],
@@ -214,9 +249,9 @@ export function createMcpServer(source: DataSource): McpServerHandle {
                 code: 'UNAVAILABLE',
                 message: 'Unable to load findings.json',
               } satisfies McpError),
-              isError: true,
             },
           ],
+          isError: true,
         };
       }
     },
@@ -225,7 +260,7 @@ export function createMcpServer(source: DataSource): McpServerHandle {
   // Tool: summary
   server.tool(
     'summary',
-    summaryInputSchema,
+    {},
     async () => {
       try {
         const [findings, runs] = await Promise.all([
@@ -266,9 +301,9 @@ export function createMcpServer(source: DataSource): McpServerHandle {
                 code: 'UNAVAILABLE',
                 message: 'Unable to load findings.json or runs.json',
               } satisfies McpError),
-              isError: true,
             },
           ],
+          isError: true,
         };
       }
     },
@@ -277,11 +312,30 @@ export function createMcpServer(source: DataSource): McpServerHandle {
   // Tool: explain_finding
   server.tool(
     'explain_finding',
-    explainFindingInputSchema,
-    async (args: { id: string }) => {
+    {
+      id: z.string().describe('The finding id'),
+    },
+    async (args: unknown) => {
+      // Validate id argument
+      const parseResult = z.object({ id: z.string() }).safeParse(args);
+      if (!parseResult.success) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                code: 'VALIDATION_ERROR',
+                message: `Invalid id: ${parseResult.error.issues[0]?.message || 'must be a string'}`,
+              } satisfies McpError),
+            },
+          ],
+          isError: true,
+        };
+      }
+
       try {
         const findings = await dataLoader.loadFindings();
-        const finding = findings.find((f) => f.id === args.id);
+        const finding = findings.find((f) => f.id === (args as { id: string }).id);
 
         if (!finding) {
           return {
@@ -290,7 +344,7 @@ export function createMcpServer(source: DataSource): McpServerHandle {
                 type: 'text',
                 text: JSON.stringify({
                   code: 'NOT_FOUND',
-                  message: `Finding not found: ${args.id}`,
+                  message: `Finding not found: ${(args as { id: string }).id}`,
                 } satisfies McpError),
               },
             ],
@@ -321,19 +375,17 @@ export function createMcpServer(source: DataSource): McpServerHandle {
                 code: 'UNAVAILABLE',
                 message: 'Unable to load findings.json',
               } satisfies McpError),
-              isError: true,
             },
           ],
+          isError: true,
         };
       }
     },
   );
 
-  // Connect to stdio transport
+  // Connect to stdio transport and start listening
   const transport = new StdioServerTransport();
-
-  // Start listening
-  server.connect(transport);
+  await server.connect(transport);
 
   return {
     async close(): Promise<void> {

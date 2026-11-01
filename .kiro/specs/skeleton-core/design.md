@@ -734,7 +734,7 @@ graveyard-shift run <appDir>
 └────────┬──────────┘
          ▼
 ┌───────────────────┐
-│  notify           │  issue/PR open/update/close (if not dryRun)
+│  notify           │  issue/PR open/update/close (dryRun: just log)
 └───────────────────┘
 ```
 
@@ -930,7 +930,7 @@ Tools return error objects (not thrown exceptions) so the MCP server remains ali
 
 ### Notifier Errors
 
-A failed GitHub API call after all retries are exhausted throws an error with the finding id and failed operation in the message. The runner catches this and logs it but does not re-throw (store writes have already completed at this point).
+A failed GitHub API call after all retries are exhausted throws an error with the finding id and failed operation in the message. The runner catches this and logs it but does not re-throw (store writes have already completed at this point). In dry-run mode, no GITHUB_TOKEN is required and no API calls are made.
 
 ### Dashboard Fetch Errors
 
