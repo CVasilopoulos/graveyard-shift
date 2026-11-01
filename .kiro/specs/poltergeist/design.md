@@ -221,3 +221,20 @@ After this design is approved, the `tasks.md` will list:
 6. Export AppDefinition from index.ts.
 7. Create demo lockfiles and README.
 8. Run `graveyard-shift run apps/poltergeist` to verify hauntings and ghosts.
+
+## Review Amendments
+
+These override the sections above where they differ.
+
+1. **HTTP client.** `lockfiles.ts` and both sources call `createHttpClient({})` and keep the skeleton defaults (User-Agent `graveyard-shift/<version> (+<repository url>)`, timeout, retries, Retry-After, per-host limit). No Poltergeist-specific User-Agent or retry settings (requirement 2.1).
+2. **Unpinned requirements.** `pip.ts` skips lines not pinned with `==` and counts them; it does not reject them. It returns `{ packages, skipped: { blank, comment, option, unpinned } }` (requirement 4.2).
+3. **Targets travel with packages.** `lockfiles.ts` returns `PackageVersion[]` of `{ owner, repo, ecosystem, name, version }`. Each source queries every distinct `(ecosystem, name, version)` once (OSV batch query, one GitHub `affects=` query) and emits one finding per target occurrence, so the same package version in two repositories gives two Finding_Ids. The GitHub source's per-package queries also stay within the unauthenticated limit of 60 requests per hour for the demo; under Actions `GITHUB_TOKEN` raises it.
+4. **Rules data flow.** `mergeById` takes `SourceResult[]` and drops `details`, so `rules(results)`:
+   1. builds a CVE-to-GHSA map from the GitHub findings (keyed by Package_Version);
+   2. rewrites each source's finding ids to the canonical Finding_Id and keeps a side map `(sourceName, Finding_Id) -> details`;
+   3. calls `mergeById` on the re-keyed `SourceResult`s;
+   4. maps each merged finding to a partial `Finding`, reading severity and fix inputs from the side map.
+   A source carried forward as stale by the runner has no `details`; severity and fix then come from the other source only.
+5. **Finding text.** `title` is `<package>@<version>: <advisory summary>` (GitHub `summary`, else OSV `summary`, else the canonical id). `summary` is the first 280 characters of the advisory description. `url` is `https://github.com/advisories/<GHSA>` for a GHSA id, else `https://osv.dev/vulnerability/<id>`. Both sources put `summary`/`description` in `details`.
+6. **Issue prefix.** `theme.issuePrefix` lives on the `AppDefinition` theme, not in `config.json`. The skeleton runner passes `appDef.theme.issuePrefix` to `notify` as the `issuePrefix` option, and `formatIssueTitleWithId` prefixes the title with it. Skeleton tests cover the runner pass-through and the title.
+7. **Store location.** The CLI's `--data` defaults to `apps/poltergeist/data/`, which the Pages workflow publishes. `config.json` is committed, not generated.
