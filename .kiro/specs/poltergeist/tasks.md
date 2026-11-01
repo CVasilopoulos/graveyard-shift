@@ -10,10 +10,10 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
 
 - [ ] 1. Scaffold the workspace and Poltergeist package
   - Verify the repo root `package.json` declares `"workspaces": ["skeleton", "apps/*"]` and `"private": true`
-  - Create `apps/poltergeist/package.json` with `"name": "poltergeist"`, `"version": "0.1.0"`, `"type": "module"`, `"main": "./dist/index.js"`, `files: ["dist", "src/dashboard"]`, `"dependencies": { "graveyard-shift": "workspace:*" }`, and pinned dev deps (`typescript`, `vitest`, `fast-check`, `@vitest/coverage-v8`)
+  - Create `apps/poltergeist/package.json` with `"name": "poltergeist"`, `"version": "0.1.0"`, `"type": "module"`, `"main": "./dist/index.js"`, `"dependencies": { "graveyard-shift": "*" }`, and pinned dev deps (`typescript`, `vitest`, `fast-check`, `@vitest/coverage-v8`)
   - Create `apps/poltergeist/tsconfig.json` with `"extends": "../skeleton/tsconfig.json"`, `"compilerOptions": { "outDir": "./dist", "rootDir": "./src" }`
   - Create `apps/poltergeist/vitest.config.ts` with `coverage: { provider: "v8" }`
-  - Create directories: `apps/poltergeist/src/parsers/`, `apps/poltergeist/src/lockfiles.ts`, `apps/poltergeist/src/sources/`, `apps/poltergeist/src/rules.ts`, `apps/poltergeist/src/config.ts`, `apps/poltergeist/src/theme.ts`, `apps/poltergeist/src/index.ts`, `apps/poltergeist/test/parsers/`, `apps/poltergeist/test/fixtures/osv/`, `apps/poltergeist/test/fixtures/github/`, `apps/poltergeist/test/sources/`, `apps/poltergeist/test/rules/`, `apps/poltergeist/demo/haunted-house/`
+  - Do not create placeholder source or test files; later tasks create them (the verify hook checks every backticked path of a ticked task)
   - Add `"test": "vitest run"` and `"build": "tsc"` scripts to `apps/poltergeist/package.json`
   - _Requirements: 15.1, 15.2, 15.3, 15.4_
 
@@ -34,12 +34,12 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - _Requirements: 4.1, 4.2, 4.3, 4.4_
   - [ ] 2.3 Write property tests for npm parser in `apps/poltergeist/test/parsers/npm.test.ts`
     - **Property 1: npm round-trip** — for any `Set<{name, version}>`, generating v3 lockfile and parsing returns same set
-    - Use `fc.set(fpc.nat16(), { maxSize: 100 })` for names and versions; `fc.jsonValue()` for lockfile
+    - Generate names with `fc.stringMatching(/^(@[a-z0-9-]{1,10}\/)?[a-z0-9][a-z0-9._-]{0,20}$/)` and versions with `fc.tuple(fc.nat(50), fc.nat(50), fc.nat(50))` joined by dots
     - _Requirements: 13.1, 3.6_
   - [ ] 2.4 Write property tests for pip parser in `apps/poltergeist/test/parsers/pip.test.ts`
     - **Property 2: pip idempotence** — `normalise(normalise(name)) === normalise(name)`
-    - **Property 3: pip round-trip** — write then parse returns same `{ packages, skipped }`
-    - Use `fc.stringOf(fc.oneof(fpc.alpha(), fc.constantFrom('_', '.', '-')), { minLength: 1, maxLength: 50 })` for names
+    - **Property 3: pip round-trip** — writing a set of normalised (name, version) pairs as `name==version` lines with random comments, markers and extras, then parsing, returns the same package set
+    - Generate names with `fc.stringMatching(/^[A-Za-z0-9][A-Za-z0-9._-]{0,30}$/)`
     - _Requirements: 13.1, 4.4, 4.5_
   - [ ] 2.5 Write unit tests for parsers in `apps/poltergeist/test/parsers/npm.test.ts` and `apps/poltergeist/test/parsers/pip.test.ts`
     - npm: valid v2/v3 lockfiles, missing `packages`, empty, link entries, scoped packages
@@ -95,7 +95,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Build CVE-to-GHSA map from GitHub findings (keyed by `{ ecosystem, name, version }`)
     - Re-key each source's finding ids to canonical `poltergeist:<owner>/<repo>:<ecosystem>:<package>@<version>:<GHSA>` or OSV id
     - Keep side map `(sourceName, id) -> details`
-    - Call `mergeById(results)`
+    - Call `mergeById` on the re-keyed `SourceResult`s
     - Map merged findings to partial `Finding`:
       - `title`: `<package>@<version>: <advisory summary>`
       - `summary`: first 280 chars of advisory description
@@ -129,7 +129,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Export type `Config`
     - _Requirements: 1.1, 1.2, 1.4_
   - [ ] 8.2 Write `apps/poltergeist/src/theme.ts`
-    - Export `AppDefinition["theme"]` with `name: "Poltergeist"`, `tagline: "Something is rattling in your lockfile"`, `accentColor: "#8b5cf6"`, `labels: { confirmed: "haunting", ghost: "ghost", resolved: "laid to rest" }`, `issuePrefix: "👻"`
+    - Export the theme (typed as `AppDefinition["theme"]`, which gains `issuePrefix` in task 11) with `name: "Poltergeist"`, `tagline: "Something is rattling in your lockfile"`, `accentColor: "#8b5cf6"`, `labels: { confirmed: "haunting", ghost: "ghost", resolved: "laid to rest" }`, `issuePrefix: "👻"`
     - _Requirements: 14.1, 14.2, 11.2_
 
 - [ ] 9. Implement index.ts
@@ -155,17 +155,20 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - _Requirements: 12.2_
 
 - [ ] 11. Update skeleton with issuePrefix change and test
-  - [ ] 11.1 Update `skeleton/src/notify/notifier.ts`
-    - Add optional `issuePrefix?: string` to notifier options
-    - Update `formatIssueTitleWithId` to prefix title with `issuePrefix` when set
-    - _Requirements: 11.2_
-  - [ ] 11.2 Add test in `skeleton/test/notify/notifier.test.ts`
-    - Verify `formatIssueTitleWithId` prefixes when `issuePrefix` supplied
-    - _Requirements: 11.2_
+  - [ ] 11.1 Update `skeleton/src/core/types.ts`, `skeleton/src/notify/notifier.ts` and `skeleton/src/core/runner.ts`
+    - Add optional `issuePrefix?: string` to the `AppDefinition` theme type and to `NotifierOptions`
+    - Update `formatIssueTitleWithId` to prefix the title with `issuePrefix` when set
+    - The runner passes `appDef.theme.issuePrefix` to `notify` when it is set
+    - Do this before task 8.2, which uses the new theme field
+    - _Requirements: 11.2, 15.4_
+  - [ ] 11.2 Add tests in `skeleton/test/notify/notifier.test.ts` and `skeleton/test/runner/runner.test.ts`
+    - Issue titles start with the prefix when `issuePrefix` is supplied and are unchanged otherwise
+    - The runner passes the theme prefix to the notifier
+    - _Requirements: 11.2, 15.4_
 
 - [ ] 12. Final checkpoint — full test suite and dry run
   - Run `npm test` in `apps/poltergeist/` and verify all tests pass offline
   - Run `npm run build` to ensure `tsc` compiles with no errors
-  - Run `graveyard-shift run apps/poltergeist --dry-run` from repo root
+  - Run `npx graveyard-shift run apps/poltergeist --dry-run` from the repo root
   - Verify demo produces hauntings and ghosts as documented in `demo/README.md`
   - _Requirements: 12.1, 12.2, 13.1, 13.2, 13.3, 13.4, 15.1, 15.2, 15.3, 15.4_
