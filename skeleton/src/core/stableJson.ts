@@ -16,6 +16,10 @@ export function stableStringify(value: unknown): string {
 function stableStringifyInner(value: unknown, indent: number): string {
   // Handle null and non-objects (scalars)
   if (value === null || typeof value !== 'object') {
+    // Canonicalise -0 to 0 to ensure stable round-trip
+    if (Object.is(value, -0)) {
+      return '0';
+    }
     return JSON.stringify(value);
   }
 

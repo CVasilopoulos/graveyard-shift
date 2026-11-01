@@ -2,6 +2,28 @@ import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import { stableStringify } from '../../src/core/stableJson.js';
 
+/**
+ * Recursively map -0 to 0 in a parsed JSON value.
+ */
+function mapNegZeroToZero(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((v) => mapNegZeroToZero(v));
+  }
+  if (value !== null && typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const key of Object.keys(value)) {
+      result[key] = mapNegZeroToZero((value as Record<string, unknown>)[key]);
+    }
+    return result;
+  }
+  // Number -0 is canonicalised to 0, but we also handle the case where
+  // the value might be the number 0 from parsing
+  if (typeof value === 'number' && Object.is(value, -0)) {
+    return 0;
+  }
+  return value;
+}
+
 describe('stableStringify', () => {
   describe('basic serialization', () => {
     it('serializes null', () => {
@@ -17,6 +39,16 @@ describe('stableStringify', () => {
       expect(stableStringify(42)).toBe('42\n');
       expect(stableStringify(3.14)).toBe('3.14\n');
       expect(stableStringify(0)).toBe('0\n');
+    });
+
+    it('canonicalises -0 to 0', () => {
+      expect(stableStringify(-0)).toBe('0\n');
+    });
+
+    it('canonicalises nested -0 values to 0', () => {
+      const obj1 = { a: -0, b: [-0] };
+      const obj2 = { a: 0, b: [0] };
+      expect(stableStringify(obj1)).toBe(stableStringify(obj2));
     });
 
     it('serializes strings', () => {
@@ -123,12 +155,14 @@ describe('stableStringify', () => {
   });
 
   describe('Property 13: Round-trip', () => {
-    it('round-trip property: parse(stableStringify(v)) deeply equals v', () => {
+    it('round-trip property: parse(stableStringify(v)) deeply equals v after mapping -0 to 0', () => {
       fc.assert(
         fc.property(fc.jsonValue(), (value) => {
           const stringified = stableStringify(value);
           const parsed = JSON.parse(stringified);
-          expect(parsed).toEqual(value);
+          // Map -0 to 0 in both the parsed value and the original for comparison
+          // since stableStringify canonicalises -0 to 0
+          expect(mapNegZeroToZero(parsed)).toEqual(mapNegZeroToZero(value));
         }),
         { numRuns: 100 },
       );
@@ -142,6 +176,20 @@ describe('stableStringify', () => {
           const first = stableStringify(value);
           const second = stableStringify(value);
           expect(first).toBe(second);
+        }),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  describe('Property 16: Idempotence', () => {
+    it('idempotence property: stableStringify(JSON.parse(stableStringify(v))) === stableStringify(v)', () => {
+      fc.assert(
+        fc.property(fc.jsonValue(), (value) => {
+          const firstStringify = stableStringify(value);
+          const parsed = JSON.parse(firstStringify);
+          const secondStringify = stableStringify(parsed);
+          expect(secondStringify).toBe(firstStringify);
         }),
         { numRuns: 100 },
       );

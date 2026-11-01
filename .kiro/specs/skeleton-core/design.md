@@ -882,7 +882,7 @@ When counter reaches cap: log warning, skip remaining.
 
 ### Property 13: Stable JSON round-trip
 
-*For any* JSON-serialisable JavaScript value `O`, parsing the output of `stableStringify(O)` with `JSON.parse` SHALL produce a value deeply equal to `O`.
+*For any* JSON-serialisable JavaScript value `O`, parsing the output of `stableStringify(O)` with `JSON.parse` SHALL produce a value deeply equal to `O` after recursively mapping `-0` to `0` in both values. The `stableStringify` function canonicalises `-0` to `0` to ensure deterministic round-trip behaviour.
 
 **Validates: Requirements 7.4**
 
@@ -892,7 +892,13 @@ When counter reaches cap: log warning, skip remaining.
 
 **Validates: Requirements 7.5**
 
-### Property 15: HTTP helper does not retry non-transient 4xx errors
+### Property 15: Stable JSON idempotence
+
+*For any* JSON-serialisable JavaScript value `O`, calling `stableStringify` on `JSON.parse(stableStringify(O))` SHALL produce the same byte sequence as the original `stableStringify(O)`.
+
+**Validates: Requirements 7.5**
+
+### Property 16: HTTP helper does not retry non-transient 4xx errors
 
 *For any* HTTP 4xx status code other than 429, the HTTP helper SHALL make exactly one attempt and then throw without retrying.
 
