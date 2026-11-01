@@ -2,214 +2,180 @@
 
 ## Introduction
 
-Poltergeist is a "watch-and-warn" app built on the Graveyard Shift skeleton. It monitors dependency lockfiles (npm package-lock.json, Python requirements.txt) in public repositories for known vulnerabilities. A vulnerability is confirmed only when both the OSV.dev and GitHub Advisory Database list it for the exact installed version. Confirmed findings (hauntings) are reported via GitHub issues, while single-source findings (ghosts) are shown but not reported. This document specifies the requirements for the Poltergeist app.
+Poltergeist is a watch-and-warn app built on the Graveyard Shift skeleton. It reads dependency lockfiles (npm `package-lock.json` v2/v3 and pinned Python `requirements.txt`) from GitHub repositories and asks two independent advisory sources, OSV.dev and the GitHub Advisory Database, which installed versions have known vulnerabilities. An advisory is a haunting (confirmed) only when both sources list it for the exact installed version; an advisory only one source lists is a ghost, shown on the dashboard but never reported. Hauntings open GitHub issues through the skeleton notifier. Everything shared (runner, HTTP helper, agreement rule, diff, store, dashboard, MCP server, notifier, CLI) comes from the skeleton; Poltergeist supplies only its sources, rules, config schema and theme.
 
 ## Glossary
 
-- **Poltergeist**: The application described in this document
-- **System**: The Poltergeist application
-- **Source**: An external data provider (OSV.dev or GitHub Advisory Database)
-- **Lockfile**: A dependency manifest file (package-lock.json or requirements.txt)
-- **Vulnerability**: A security issue in a package version
-- **Advisory**: A security advisory from OSV.dev or GitHub
-- **HAUNTING**: A confirmed vulnerability reported by both sources
-- **GHOST**: A single-source finding that is shown but not reported
-- **Laid to rest**: A resolved vulnerability where the installed version is fixed
-- **Ecosystem**: The package manager type (npm or pypi)
-- **Package**: A software package with a normalized name
-- **Version**: A specific release of a package
-- **GHSA**: GitHub Security Advisory identifier
-- **CVSS**: Common Vulnerability Scoring System
+- **Target**: one repository to watch: owner, repo, ref and the lockfile paths inside it.
+- **Package_Version**: an (ecosystem, normalised package name, exact version) triple read from a lockfile.
+- **Ecosystem**: `npm` or `PyPI` (OSV spelling); the GitHub Advisory Database calls PyPI `pip`.
+- **GHSA_Id**: a GitHub Security Advisory id (`GHSA-xxxx-xxxx-xxxx`).
+- **Finding_Id**: `poltergeist:<owner>/<repo>:<ecosystem>:<package>@<version>:<advisory id>`.
+- **Haunting**: a confirmed finding (both sources report the same Finding_Id).
+- **Ghost**: a finding only one source reports.
+- **Laid_To_Rest**: a resolved finding (the skeleton's resolved state).
 
 ## Requirements
 
 ### Requirement 1: Configuration
 
-**User Story:** As a maintainer, I want to configure Poltergeist to monitor specific repositories, so that I can protect my dependencies.
+**User Story:** As a repository owner, I want to list the repositories and lockfiles Poltergeist watches in one config file, so that adding a target is a one-line change.
 
 #### Acceptance Criteria
 
-1. WHEN Poltergeist starts, THE System SHALL load configuration from `.kiro/specs/poltergeist/config.ts`
-2. THE Config file SHALL define a list of targets, each with owner, repository, ref, and lockfile_paths
-3. THE Lockfile_paths field SHALL accept an array of paths relative to the repository root
-4. WHERE a target specifies a lockfile path ending in `package-lock.json`, THE System SHALL treat it as npm ecosystem
-5. WHERE a target specifies a lockfile path ending in `requirements.txt`, THE System SHALL treat it as pypi ecosystem
+1. THE App SHALL export a zod schema for `apps/poltergeist/config.json`, which the skeleton runner reads and validates (`graveyard-shift run apps/poltergeist`).
+2. THE Config SHALL contain `targets`: a non-empty array of `{ owner, repo, ref, lockfiles }`, where `ref` defaults to `main` and `lockfiles` is a non-empty array of paths relative to the repository root.
+3. THE Config MAY contain the skeleton notifier fields `repo`, `maxNewIssues` and `maxNewPRs`, which the runner passes to the notifier unchanged.
+4. WHEN a lockfile path ends in `package-lock.json`, THE App SHALL treat it as ecosystem `npm`; WHEN it ends in `.txt` and its file name starts with `requirements`, THE App SHALL treat it as ecosystem `PyPI`; any other path SHALL fail config validation with a message naming the path.
 
 ### Requirement 2: Lockfile Fetching
 
-**User Story:** As a user, I want Poltergeist to fetch lockfiles from GitHub repositories, so that I can monitor their dependencies without cloning them.
+**User Story:** As an operator, I want lockfiles read straight from GitHub, so that Poltergeist needs no clone of the watched repository.
 
 #### Acceptance Criteria
 
-1. WHEN fetching a target repository, THE System SHALL construct a raw URL using the owner, repository, ref, and lockfile_path
-2. WHEN the URL is constructed, THE System SHALL use the format `https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}`
-3. WHEN a lockfile fetch fails with HTTP 404, THE System SHALL treat it as a missing file and record no packages
-4. WHEN a lockfile fetch fails with HTTP 410, THE System SHALL treat it as a deleted file and record no packages
-5. WHEN a lockfile fetch fails with a transient error (429 with retry-after, 5xx, timeout), THE System SHALL retry with exponential backoff up to 3 attempts
-6. EACH lockfile fetch SHALL include a timeout of 30 seconds and a User-Agent header `poltergeist (https://github.com/graveyard-shift/poltergeist)`
+1. THE App SHALL fetch each lockfile from `https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}` through the skeleton HTTP helper, which owns timeouts, retries, Retry-After handling, per-host limits and the User-Agent.
+2. THE App SHALL fetch and parse each lockfile at most once per run and share the resulting Package_Version list between both sources.
+3. IF a lockfile cannot be fetched (any non-2xx status, including 404, after the helper's retries) or cannot be parsed, THEN every source SHALL fail for this run with an error naming the target and path, so that the skeleton keeps the previous store instead of reporting every finding of that target as laid to rest.
 
 ### Requirement 3: npm Lockfile Parser
 
-**User Story:** As a developer, I want Poltergeist to parse npm package-lock.json files, so that I can extract package dependencies for vulnerability checking.
+**User Story:** As a developer, I want every installed npm package version extracted from a lockfile, so that each one can be checked.
 
 #### Acceptance Criteria
 
-1. WHEN a valid package-lock.json file is provided, THE Parser SHALL extract packages from the packages map
-2. WHEN parsing the packages map, THE Parser SHALL skip entries with keys starting with `node_modules/` or `node_modules` alone
-3. WHEN parsing the packages map, THE Parser SHALL skip link entries (entries with a `link` field)
-4. WHEN a package entry has a `resolved` field, THE Parser SHALL extract the version from the resolved URL or from the key
-5. WHEN parsing fails due to invalid JSON, THE Parser SHALL return a descriptive error
-6. FOR ALL valid package-lock.json objects, parsing then printing then parsing SHALL produce an equivalent object (round-trip property)
+1. WHEN given a `package-lock.json` with `lockfileVersion` 2 or 3, THE Parser SHALL read the `packages` map.
+2. THE Parser SHALL skip the root entry (key `""`) and every entry with `link: true`.
+3. FOR every other entry, THE Parser SHALL take the package name as the part of the key after the last `node_modules/` (so nested entries and scoped names such as `@scope/name` work) and the version from the entry's `version` field; it SHALL never derive versions from `resolved` URLs.
+4. THE Parser SHALL return each distinct (name, version) pair once, even when the same pair is installed at several paths.
+5. IF the input is not valid JSON, has no `packages` map (lockfile v1) or an entry has no `version`, THEN THE Parser SHALL return a descriptive error.
+6. FOR ALL sets of (name, version) pairs, building a v3 lockfile from the set and parsing it SHALL return the same set (round-trip property).
 
 ### Requirement 4: Python Requirements Parser
 
-**User Story:** As a developer, I want Poltergeist to parse Python requirements.txt files, so that I can extract package dependencies for vulnerability checking.
+**User Story:** As a developer, I want every pinned Python dependency extracted from a requirements file, so that each one can be checked.
 
 #### Acceptance Criteria
 
-1. WHEN a valid requirements.txt file is provided, THE Parser SHALL parse lines with `name==version` format
-2. WHEN parsing a line, THE Parser SHALL extract the package name and exact version
-3. WHEN a line is a comment (starts with #), THE Parser SHALL skip it
-4. WHEN a line contains extras (e.g., `package[extra]==version`), THE Parser SHALL normalize the name per PEP 503 and ignore the extras
-5. WHEN a line contains options (e.g., `-r`, `--index-url`), THE Parser SHALL skip it
-6. WHEN parsing fails due to malformed input, THE Parser SHALL return a descriptive error
-7. THE Normalizer SHALL convert package names to lowercase and replace underscores/dots with hyphens per PEP 503
-8. FOR ALL normalized package names, normalizing twice SHALL produce the same result (idempotence property)
+1. THE Parser SHALL read lines of the form `name==version`, after stripping inline comments (` #...`), environment markers (from `;`), extras (`[...]`) and surrounding whitespace, and joining backslash continuation lines.
+2. THE Parser SHALL skip blank lines, comment lines, option lines (starting with `-`, such as `-r`, `-e`, `--index-url`, `--hash`) and requirements not pinned with `==`, and SHALL return how many lines it skipped for each of those reasons.
+3. THE Normaliser SHALL lowercase a package name and replace every run of `-`, `_` and `.` with a single `-` (PEP 503).
+4. FOR ALL package names, normalising twice SHALL give the same result as normalising once (idempotence property).
+5. FOR ALL sets of (normalised name, version) pairs, writing them as `name==version` lines (with random comments, markers and extras added) and parsing SHALL return the same set (round-trip property).
 
 ### Requirement 5: OSV.dev Source
 
-**User Story:** As a monitoring system, I want to query OSV.dev for vulnerabilities, so that I can identify security issues in dependencies.
+**User Story:** As the agreement rule, I want OSV.dev's view of every Package_Version, so that it can be compared with GitHub's.
 
 #### Acceptance Criteria
 
-1. WHEN querying vulnerabilities, THE System SHALL POST to `/v1/querybatch` with chunks of up to 1000 package-version pairs
-2. WHEN a chunk exceeds 1000 pairs, THE System SHALL split into multiple requests
-3. WHEN the OSV.dev API returns an error, THE System SHALL retry with exponential backoff up to 3 attempts
-4. WHEN a vulnerability is returned, THE System SHALL extract the advisory ID, package name, affected versions, and severity
-5. WHEN fetching detailed vulnerability information, THE System SHALL GET `/v1/vulns/{id}` for each unique advisory ID
-6. WHEN fetching detailed information, THE System SHALL cache results per run to avoid duplicate requests
-7. WHEN a vulnerability has no fixed version in the response, THE System SHALL record null for fix version
-8. EACH OSV.dev request SHALL include a User-Agent header `poltergeist (https://github.com/graveyard-shift/poltergeist)`
+1. THE OSV_Source SHALL be a function named `osv` returning a skeleton `SourceResult` with `sourceName: "osv"`.
+2. THE OSV_Source SHALL POST `https://api.osv.dev/v1/querybatch` with at most 1000 queries per request, one query per Package_Version (`{ package: { name, ecosystem }, version }`), and follow each query's `next_page_token` until it is absent.
+3. THE OSV_Source SHALL GET `https://api.osv.dev/v1/vulns/{id}` once per distinct advisory id per run (cached in memory) to read aliases, severity, `database_specific.severity`, affected ranges and `withdrawn`.
+4. THE OSV_Source SHALL exclude advisories whose `withdrawn` field is set.
+5. FOR each remaining (Package_Version, advisory) pair, THE OSV_Source SHALL emit one finding whose `details` carry the OSV id, its aliases, its severity data and the fixed versions from the affected ranges for that package.
 
 ### Requirement 6: GitHub Advisory Database Source
 
-**User Story:** As a monitoring system, I want to query the GitHub Advisory Database for vulnerabilities, so that I can identify security issues in dependencies.
+**User Story:** As the agreement rule, I want GitHub's view of every Package_Version, so that it can be compared with OSV's.
 
 #### Acceptance Criteria
 
-1. WHEN querying vulnerabilities, THE System SHALL GET `/advisories?ecosystem=npm|pip` with pagination
-2. WHEN the ecosystem is npm, THE System SHALL filter advisories where `affected.ecosystem` is `npm`
-3. WHEN the ecosystem is pypi, THE System SHALL filter advisories where `affected.ecosystem` is `pip`
-4. WHEN a GitHub advisory has a `ghsa_id`, THE System SHALL use it as the advisory ID
-5. WHEN a GitHub advisory has a `cve_id` but no `ghsa_id`, THE System SHALL construct a GHSA-like ID using the CVE
-6. WHEN authenticated with a GITHUB_TOKEN, THE System SHALL include the token in the Authorization header
-7. WHEN a GitHub advisory is withdrawn or disputed, THE System SHALL record its status
-8. EACH GitHub request SHALL include a User-Agent header `poltergeist (https://github.com/graveyard-shift/poltergeist)`
+1. THE GitHub_Source SHALL be a function named `github` returning a skeleton `SourceResult` with `sourceName: "github"`.
+2. FOR each Package_Version, THE GitHub_Source SHALL GET `https://api.github.com/advisories?ecosystem=<npm|pip>&affects=<name>@<version>&per_page=100` and follow `Link: rel="next"` pages.
+3. WHEN the `GITHUB_TOKEN` environment variable is set, THE GitHub_Source SHALL send it as a Bearer token; without it, requests are unauthenticated.
+4. THE GitHub_Source SHALL exclude advisories whose `withdrawn_at` is set.
+5. FOR each remaining (Package_Version, advisory) pair, THE GitHub_Source SHALL emit one finding whose `details` carry `ghsa_id`, `cve_id`, `severity` and the `first_patched_version` of the vulnerability entry for that package.
 
-### Requirement 7: ID Canonicalisation
+### Requirement 7: Advisory Id Canonicalisation
 
-**User Story:** As a deduplication system, I want to canonicalise advisory IDs across both sources, so that I can merge duplicate advisories.
+**User Story:** As the agreement rule, I want the same advisory to carry the same id from both sources, so that one advisory becomes one finding.
 
 #### Acceptance Criteria
 
-1. WHEN an OSV advisory has aliases, THE System SHALL extract GHSA IDs from the aliases array
-2. WHEN a GitHub advisory has both ghsa_id and cve_id, THE System SHALL create a pair identifier
-3. WHEN canonicalising, THE System SHALL use the GHSA ID as the primary identifier when available
-4. WHEN two advisories from different sources refer to the same vulnerability, THE System SHALL merge them
-5. THE Final finding ID SHALL follow the format `poltergeist:<repo>:<ecosystem>:<package>@<version>:<GHSA>`
-6. WHEN the GHSA ID is not available, THE System SHALL use the CVE ID in the finding ID
-7. FOR ALL advisory IDs, using different alias orders SHALL produce the same canonical ID (order independence property)
+1. THE Rules SHALL canonicalise every advisory to a GHSA_Id when one is known: for a GitHub finding, its `ghsa_id`; for an OSV finding, its own id if it starts with `GHSA-`, else the lexicographically smallest `GHSA-` alias, else the `ghsa_id` of a GitHub finding for the same Package_Version whose `cve_id` is one of its aliases.
+2. WHEN no GHSA_Id is known for an OSV advisory, THE Rules SHALL keep its OSV id (such a finding can only be a ghost).
+3. THE Rules SHALL build each Finding_Id as `poltergeist:<owner>/<repo>:<ecosystem>:<package>@<version>:<canonical id>`.
+4. FOR ALL advisories, permuting the order of their aliases SHALL not change the canonical id (alias-order independence property).
 
-### Requirement 8: Confirmation Logic
+### Requirement 8: Confirmation
 
-**User Story:** As a reporting system, I want to confirm vulnerabilities only when both sources agree, so that I reduce false positives.
+**User Story:** As a repository owner, I want only advisories both sources agree on to be treated as real, so that a single source's mistake never opens an issue.
 
 #### Acceptance Criteria
 
-1. WHEN both sources list the same vulnerability for the exact installed version, THE System SHALL mark it as a HUNTING
-2. WHEN only one source lists the vulnerability, THE System SHALL mark it as a GHOST
-3. WHEN a withdrawn or disputed advisory is seen by only one source, THE System SHALL keep it as a GHOST
-4. WHEN a vulnerability is marked as Laid to rest, THE System SHALL record the resolved state
-5. THE Confirmation SHALL require exact version match, not version range
+1. THE App SHALL rely on the skeleton agreement rule: a finding reported under the same Finding_Id by both `osv` and `github` is a haunting (confirmed); a finding only one source reports is a ghost.
+2. WHEN an advisory is withdrawn in one source and still listed by the other, THE finding SHALL be a ghost (follows from 5.4, 6.4 and 8.1).
 
-### Requirement 9: Severity Reporting
+### Requirement 9: Severity
 
-**User Story:** As a user, I want to see the severity of vulnerabilities, so that I can prioritize remediation.
+**User Story:** As a repository owner, I want each finding to carry a severity, so that I can triage.
 
 #### Acceptance Criteria
 
-1. WHEN the GitHub advisory has a severity field, THE System SHALL use it as the primary severity
-2. WHEN the GitHub advisory has no severity, THE System SHALL extract CVSS score from OSV advisory
-3. WHEN using CVSS score, THE System SHALL band it into Low (<7), Medium (7-8.9), High (9-10)
-4. WHEN both sources provide severity, THE System SHALL prefer GitHub's severity
+1. WHEN the GitHub finding has a severity, THE Rules SHALL use it (`critical`, `high`, `medium`, `low`).
+2. OTHERWISE THE Rules SHALL use OSV `database_specific.severity` when present, else the CVSS v3.x base score computed from the OSV `CVSS_V3` vector, banded critical >= 9.0, high 7.0-8.9, medium 4.0-6.9, low 0.1-3.9.
+3. WHEN no severity can be derived, THE severity SHALL be `info`.
 
 ### Requirement 10: Fix Version
 
-**User Story:** As a user, I want to know which version fixes the vulnerability, so that I can upgrade.
+**User Story:** As a repository owner, I want to know which version to upgrade to, so that the fix is one edit.
 
 #### Acceptance Criteria
 
-1. WHEN both sources provide a fixed version, THE System SHALL use the lowest first-patched version both agree on
-2. WHEN sources provide different fixed versions, THE System SHALL use the higher of the two and record a note
-3. WHEN a source provides no fixed version, THE System SHALL record null for that source
-4. WHEN both sources provide null, THE System SHALL record null for the finding
+1. WHEN both sources give fixed versions and share at least one, THE Rules SHALL use the lowest shared version as `fix.value`.
+2. WHEN both sources give fixed versions but share none, THE Rules SHALL use the higher of the two sources' lowest fixed versions and say in `fix.text` which source said what.
+3. WHEN only one source gives a fixed version, THE Rules SHALL use its lowest one and name that source in `fix.text`.
+4. WHEN no source gives a fixed version, THE finding SHALL have no `fix`.
+5. Version comparison SHALL use semver for npm and PEP 440 ordering for PyPI.
 
-### Requirement 11: Notifying
+### Requirement 11: Notifications
 
-**User Story:** As a repository owner, I want GitHub issues for confirmed vulnerabilities, so that I can track and remediate them.
-
-#### Acceptance Criteria
-
-1. WHEN a HUNTING is detected, THE System SHALL open or update a GitHub issue in the repository running the workflow
-2. THE Issue title SHALL be prefixed with a spirit emoji (👻 for ghost, 💀 for haunting)
-3. THE Issue title SHALL include the finding ID in the format `poltergeist:<repo>:<ecosystem>:<package>@<version>:<GHSA>`
-4. THE Issue body SHALL include severity, affected version, fix version, and links to advisories
-5. WHEN a HUNTING is resolved, THE System SHALL update the issue with a resolution comment and close it
-6. WHEN a GHOST is resolved, THE System SHALL mark it as Laid to rest in the store
-
-### Requirement 12: Demo Targets
-
-**User Story:** As a demonstrator, I want to show Poltergeist with vulnerable test targets, so that judges can see it working.
+**User Story:** As a repository owner, I want one issue per haunting in my repository, so that confirmed advisories land in my tracker.
 
 #### Acceptance Criteria
 
-1. WHEN the demo target is processed, THE System SHALL parse `apps/poltergeist/demo/haunted-house/package-lock.json`
-2. WHEN the demo target is processed, THE System SHALL parse `apps/poltergeist/demo/haunted-house/requirements.txt`
-3. THE Demo lockfiles SHALL be pinned to known-vulnerable package versions
-4. THE Demo lockfiles SHALL include vulnerabilities that trigger both HUNTING and GHOST states
+1. THE App SHALL use the skeleton notifier unchanged in behaviour: issues only for confirmed findings, one per Finding_Id, updated rather than duplicated, closed when the finding is laid to rest, opened in the repository running the workflow unless the config names another.
+2. THE Skeleton SHALL gain an optional `theme.issuePrefix` string; WHEN it is set, the notifier SHALL prefix every issue title it creates with it.
+3. THE Poltergeist theme SHALL set `issuePrefix` to the ghost emoji (👻).
+
+### Requirement 12: Demo Target
+
+**User Story:** As a judge, I want the live dashboard to always show hauntings and ghosts, so that I can see Poltergeist working.
+
+#### Acceptance Criteria
+
+1. THE Repository SHALL contain `apps/poltergeist/demo/haunted-house/package-lock.json` and `apps/poltergeist/demo/haunted-house/requirements.txt`, pinned to versions with published advisories.
+2. THE Default config SHALL watch this repository itself (owner `CVasilopoulos`, repo `graveyard-shift`, ref `main`, both demo lockfiles).
+3. THE Demo lockfiles SHALL produce at least three hauntings and at least one ghost, checked once against the live APIs while building the demo and listed with their advisory ids in `apps/poltergeist/demo/README.md`.
 
 ### Requirement 13: Testing
 
-**User Story:** As a developer, I want thorough tests, so that I can trust Poltergeist's output.
+**User Story:** As a developer, I want offline, property-based tests, so that the parsers and canonicalisation are trustworthy.
 
 #### Acceptance Criteria
 
-1. WHEN testing parsers, THE Tests SHALL use property-based testing with fast-check
-2. WHEN testing npm parser, THE Tests SHALL verify round-trip of generated package-lock.json files
-3. WHEN testing Python parser, THE Tests SHALL verify name normalisation idempotence
-4. WHEN testing id canonicalisation, THE Tests SHALL verify alias order independence
-5. WHEN testing sources, THE Tests SHALL use recorded fixtures, never live network calls
-6. EACH source test SHALL include fixtures for successful responses, 404, 429 with retry-after, and timeout scenarios
+1. THE Tests SHALL use vitest and fast-check for the properties in 3.6, 4.4, 4.5 and 7.4.
+2. THE Source tests SHALL use recorded fixtures for OSV and GitHub responses (including a paginated response, a withdrawn advisory and a 404) and SHALL make no live network calls.
+3. THE Rules tests SHALL cover a GHSA-id OSV entry, a PYSEC entry with a GHSA alias, an OSV entry linked only through a CVE alias, and an OSV-only advisory (ghost).
+4. THE Tests SHALL live in `apps/poltergeist/test/`.
 
-### Requirement 14: Theme and Branding
+### Requirement 14: Theme
 
-**User Story:** As a user, I want a consistent theme, so that I can recognize Poltergeist's output.
+**User Story:** As a user, I want Poltergeist to look like itself, so that its dashboard is recognisable.
 
 #### Acceptance Criteria
 
-1. THE Application name SHALL be "Poltergeist"
-2. THE Tagline SHALL be "Something is rattling in your lockfile"
-3. THE Accent color SHALL be Violet
-4. THE Labels SHALL be: haunting (confirmed), ghost (single-source), laid to rest (resolved)
+1. THE Theme SHALL have name `Poltergeist`, tagline `Something is rattling in your lockfile` and accent colour `#8b5cf6`.
+2. THE Theme labels SHALL be `haunting` (confirmed), `ghost` (ghost) and `laid to rest` (resolved).
 
 ### Requirement 15: Architecture
 
-**User Story:** As a maintainer, I want Poltergeist to follow the skeleton pattern, so that I can maintain consistency across apps.
+**User Story:** As a maintainer, I want Poltergeist to be a thin app on the skeleton, so that the second app proves the skeleton is reusable.
 
 #### Acceptance Criteria
 
-1. THE Poltergeist app SHALL be built as a workspace package at `apps/poltergeist`
-2. THE App SHALL import from the graveyard-shift skeleton via npm workspace, not relative paths
-3. THE App code SHALL consist only of sources, rules, config, and theme modules
-4. THE Core modules (runner, rules helpers, diff, store, notifier, MCP) SHALL come from the skeleton
-5. THE Tests SHALL live in `apps/poltergeist/test/` and follow the skeleton's test structure
+1. THE App SHALL be the npm workspace package `apps/poltergeist` (the root `package.json` workspaces SHALL include `apps/*`) and SHALL import shared code from the `graveyard-shift` package, never by relative path into `skeleton/`.
+2. THE App SHALL export an `AppDefinition` from `apps/poltergeist/src/index.ts` whose `sources` are the functions `osv` and `github` (the runner names an erroring source by its function name).
+3. THE App code SHALL consist of the parsers, the two sources, the rules, the config schema and the theme; it SHALL not reimplement anything the skeleton provides.
+4. THE Skeleton change in 11.2 SHALL come with its own skeleton test.
