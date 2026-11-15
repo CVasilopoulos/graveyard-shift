@@ -87,8 +87,8 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Test: returns findings with `details` containing `ghsa_id`, `cve_id`, `severity`, `fixed_versions`
     - _Requirements: 13.2, 6.2_
 
-- [ ] 6. Implement rules
-  - [ ] 6.1 Write `apps/poltergeist/src/rules.ts`
+- [x] 6. Implement rules
+  - [x] 6.1 Write `apps/poltergeist/src/rules.ts` with the helpers `apps/poltergeist/src/versions.ts` (semver and PEP 440 ordering) and `apps/poltergeist/src/cvss.ts` (CVSS v3 base score)
     - Accept `SourceResult[]` and config; return `Array<Omit<Finding, 'firstSeen' | 'lastSeen' | 'resolvedAt' | 'stale'>>`
     - Build CVE-to-GHSA map from GitHub findings (keyed by `{ ecosystem, name, version }`)
     - Re-key each source's finding ids to canonical `poltergeist:<owner>/<repo>:<ecosystem>:<package>@<version>:<GHSA>` or OSV id
@@ -100,15 +100,17 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
       - `url`: `https://github.com/advisories/<GHSA>` or `https://osv.dev/vulnerability/<id>`
       - `severity`: GitHub if present, else OSV `database_specific`, else CVSS banded, else `info`
       - `fix`: both share → lowest shared; else higher of two with note; else undefined
+      - Ignore fixed versions not above the installed version first (requirement 10.6, added in review)
+      - Findings the runner carries forward for a failed source have no `details`: keep their id, take package and advisory from it
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 8.1, 9.1, 9.2, 9.3, 9.4, 10.1, 10.2, 10.3, 10.4_
-  - [ ] 6.2 Write tests for id canonicalisation in `apps/poltergeist/test/rules/ids.test.ts`
+  - [x] 6.2 Write tests for id canonicalisation in `apps/poltergeist/test/rules/ids.test.ts`
     - GHSA-id OSV entry → use own id
     - PYSEC with GHSA alias → use lexicographically smallest GHSA
     - CVE-linked OSV with GitHub GHSA → use GitHub GHSA
     - OSV-only advisory → use OSV id
     - **Property 4: alias-order independence** — permutations produce same canonical id
     - _Requirements: 13.1, 7.4_
-  - [ ] 6.3 Write tests for severity and fix in `apps/poltergeist/test/rules/severity.test.ts` and `apps/poltergeist/test/rules/fix.test.ts`
+  - [x] 6.3 Write tests for severity and fix in `apps/poltergeist/test/rules/severity.test.ts` and `apps/poltergeist/test/rules/fix.test.ts`, plus `apps/poltergeist/test/rules/versions.test.ts` and `apps/poltergeist/test/rules/cvss.test.ts` for the helpers
     - GitHub severity → use it
     - OSV `database_specific` → use it
     - OSV CVSS → band correctly
@@ -117,7 +119,7 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - One source → use its lowest with source name
     - _Requirements: 13.1, 9.1, 9.2, 9.3, 9.4, 10.1, 10.2, 10.3, 10.4_
 
-- [ ] 7. Checkpoint — run `npm test` in `apps/poltergeist/` for lockfiles, sources, rules
+- [x] 7. Checkpoint — run `npm test` in `apps/poltergeist/` for lockfiles, sources, rules
 
 - [x] 8. Implement config and theme
   - [x] 8.1 Write `apps/poltergeist/src/config.ts`

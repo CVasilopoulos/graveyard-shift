@@ -1,250 +1,70 @@
 import { describe, expect, it } from 'vitest';
-import type { SourceResult } from 'graveyard-shift';
 import { rules } from '../../src/rules.js';
-import { configSchema } from '../../src/config.js';
+import { githubDetails, githubResult, osvDetails, osvResult } from './builders.js';
 
-function osvFinding(id: string, details: Record<string, unknown>): SourceResult['findings'][0] {
-  return {
-    id,
-    title: `OSV ${id}: summary`,
-    details,
-  };
+const ADVISORY = 'GHSA-1234-5678-9abc';
+
+function fixFor(osvFixed: string[] | undefined, githubFixed: string[] | undefined, pkg: { ecosystem?: 'npm' | 'PyPI'; version?: string } = {}) {
+  const results = [];
+  if (osvFixed) results.push(osvResult(osvDetails({ id: ADVISORY, fixed: osvFixed, ...pkg })));
+  if (githubFixed) results.push(githubResult(githubDetails({ ghsa_id: ADVISORY, fixed_versions: githubFixed, ...pkg })));
+  return rules(results)[0].fix;
 }
 
-function githubFinding(id: string, details: Record<string, unknown>): SourceResult['findings'][0] {
-  return {
-    id,
-    title: `GitHub ${details.ghsa_id}: summary`,
-    details,
-  };
-}
-
-describe('rules fix version', () => {
-  it('uses lowest shared fixed version when both sources have shared versions', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [],
-            fixed: ['1.0.1', '1.0.2', '1.0.3'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      {
-        sourceName: 'github',
-        findings: [
-          githubFinding('poltergeist:o/r:npm:pkg@1.0.0:GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            ghsa_id: 'GHSA-1234-5678-9abc',
-            cve_id: 'CVE-2023-1234',
-            fixed_versions: ['1.0.2', '1.0.4'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-    ];
-
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
-
-    expect(findings[0].fix).toEqual({ text: 'Fixed in version', value: '1.0.2' });
+describe('fix version', () => {
+  it('uses the lowest version both sources list', () => {
+    expect(fixFor(['1.0.3', '1.0.2', '1.0.1'], ['1.0.4', '1.0.2'])).toEqual({
+      value: '1.0.2',
+      text: 'Upgrade pkg to 1.0.2 or later (OSV and GitHub agree).',
+    });
   });
 
-  it('uses higher of two versions when sources have no shared versions', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [],
-            fixed: ['1.0.2'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      {
-        sourceName: 'github',
-        findings: [
-          githubFinding('poltergeist:o/r:npm:pkg@1.0.0:GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            ghsa_id: 'GHSA-1234-5678-9abc',
-            cve_id: 'CVE-2023-1234',
-            fixed_versions: ['1.0.4'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-    ];
-
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
-
-    expect(findings[0].fix).toEqual({ text: 'GitHub: 1.0.4, OSV: 1.0.2', value: '1.0.4' });
+  it('uses the higher of the two lowest versions and says which source named which when they share none', () => {
+    expect(fixFor(['1.0.1'], ['1.0.2', '2.0.0'])).toEqual({
+      value: '1.0.2',
+      text: 'Upgrade pkg to 1.0.2 or later: GitHub names 1.0.2, OSV names 1.0.1.',
+    });
   });
 
-  it('uses source-specific fix when only one source lists versions', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [],
-            fixed: ['1.0.2'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      { sourceName: 'github', findings: [], fetchedAt: new Date().toISOString() },
-    ];
-
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
-
-    expect(findings[0].fix).toEqual({ text: 'OSV: 1.0.2', value: '1.0.2' });
+  it('names the only source that gives a fixed version', () => {
+    expect(fixFor([], ['1.0.5', '1.0.2'])).toEqual({ value: '1.0.2', text: 'Upgrade pkg to 1.0.2 or later (GitHub only).' });
+    expect(fixFor(['1.0.3'], undefined)).toEqual({ value: '1.0.3', text: 'Upgrade pkg to 1.0.3 or later (OSV only).' });
   });
 
-  it('no fix when neither source lists versions', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [],
-            fixed: [],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      { sourceName: 'github', findings: [], fetchedAt: new Date().toISOString() },
-    ];
-
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
-
-    expect(findings[0].fix).toBeUndefined();
+  it('has no fix when no source gives a fixed version', () => {
+    expect(fixFor([], [])).toBeUndefined();
   });
 
-  it('filters out fixed versions not above installed version', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '2.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [],
-            fixed: ['1.0.2', '2.0.1', '2.1.0'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      {
-        sourceName: 'github',
-        findings: [
-          githubFinding('poltergeist:o/r:npm:pkg@2.0.0:GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '2.0.0',
-            ghsa_id: 'GHSA-1234-5678-9abc',
-            cve_id: 'CVE-2023-1234',
-            fixed_versions: ['2.0.1', '2.1.0'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-    ];
-
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
-
-    expect(findings[0].fix).toEqual({ text: 'Fixed in version', value: '2.0.1' });
+  it('ignores fixed versions of older release lines that are not above the installed version', () => {
+    expect(fixFor(['1.2.6', '0.2.4'], ['0.2.4', '1.2.6'], { version: '1.2.5' })?.value).toBe('1.2.6');
+    expect(fixFor(['1.0.0'], ['0.9.9'], { version: '1.0.0' })).toBeUndefined();
   });
 
-  it('handles multiple fixed versions from GitHub and OSV', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [],
-            fixed: ['1.0.1', '1.0.5', '1.1.0'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      {
-        sourceName: 'github',
-        findings: [
-          githubFinding('poltergeist:o/r:npm:pkg@1.0.0:GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            ghsa_id: 'GHSA-1234-5678-9abc',
-            cve_id: 'CVE-2023-1234',
-            fixed_versions: ['1.0.3', '1.0.5', '1.2.0'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-    ];
+  it('compares npm versions as semver, numerically and with prereleases before releases', () => {
+    expect(fixFor(['4.20.0', '5.0.0'], ['4.20.0', '5.0.0'], { version: '5.0.0-beta.1' })?.value).toBe('5.0.0');
+    expect(fixFor(['10.0.0', '9.1.0'], ['9.1.0'], { version: '9.0.0' })?.value).toBe('9.1.0');
+  });
 
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
+  it('compares PyPI versions with PEP 440 ordering', () => {
+    expect(fixFor(['1.0.post1'], ['1.0.post1'], { ecosystem: 'PyPI', version: '1.0' })?.value).toBe('1.0.post1');
+    expect(fixFor(['2.0', '2.0rc1'], ['2.0rc1'], { ecosystem: 'PyPI', version: '1.9' })?.value).toBe('2.0rc1');
+    expect(fixFor(['2.32.4'], ['2.32.4'], { ecosystem: 'PyPI', version: '2.32.4.dev0' })?.value).toBe('2.32.4');
+  });
 
-    expect(findings[0].fix).toEqual({ text: 'Fixed in version', value: '1.0.5' });
+  it('treats equal versions written differently as shared', () => {
+    expect(fixFor(['2.0'], ['2.0.0'], { ecosystem: 'PyPI', version: '1.0' })).toEqual({
+      value: '2.0.0',
+      text: 'Upgrade pkg to 2.0.0 or later (OSV and GitHub agree).',
+    });
+  });
+
+  it('collects fixed versions from every OSV copy of the advisory', () => {
+    const findings = rules([
+      osvResult(
+        osvDetails({ id: ADVISORY, aliases: ['PYSEC-2023-74'], fixed: [] }),
+        osvDetails({ id: 'PYSEC-2023-74', aliases: [ADVISORY], fixed: ['1.4.0'] }),
+      ),
+    ]);
+    expect(findings[0].fix?.value).toBe('1.4.0');
   });
 });

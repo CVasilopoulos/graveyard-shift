@@ -1,232 +1,175 @@
 import { mergeById, type PartialFinding, type SourceResult } from 'graveyard-shift';
-import type { Config } from './config.js';
+import type { Config, Ecosystem } from './config.js';
+import { cvss3BaseScore, severityFromScore } from './cvss.js';
+import { findingId, packageKey } from './lockfiles.js';
 import type { GithubDetails } from './sources/github.js';
 import type { OsvDetails } from './sources/osv.js';
+import { compareVersions, lowestVersion } from './versions.js';
 
-function rules(results: SourceResult[], config: Config): PartialFinding[] {
-  const githubResult = results.find((r) => r.sourceName === 'github');
-  const osvResult = results.find((r) => r.sourceName === 'osv');
+type Severity = PartialFinding['severity'];
+type Fix = NonNullable<PartialFinding['fix']>;
 
-  const githubFindings = githubResult?.findings ?? [];
-  const osvFindings = osvResult?.findings ?? [];
+const SUMMARY_LENGTH = 280;
 
-  const githubDetailsMap = new Map<string, GithubDetails>();
-  for (const finding of githubFindings) {
-    const details = finding.details as unknown as GithubDetails;
-    const key = `${details.ecosystem}:${details.name}@${details.version}`;
-    githubDetailsMap.set(key, details);
-  }
-
-  const osvDetailsById = new Map<string, OsvDetails>();
-  for (const finding of osvFindings) {
-    const details = finding.details as unknown as OsvDetails;
-    osvDetailsById.set(finding.id, details);
-  }
-
-  const githubIdByPackageAndCve = new Map<string, Map<string, string>>();
-  for (const [pkgKey, details] of githubDetailsMap) {
-    const cveMap = new Map<string, string>();
-    if (details.cve_id) {
-      cveMap.set(details.cve_id, details.ghsa_id);
-    }
-    if (cveMap.size > 0) {
-      githubIdByPackageAndCve.set(pkgKey, cveMap);
-    }
-  }
-
-  function canonicalizeOsvId(osvDetails: OsvDetails, pkgKey: string): string {
-    if (osvDetails.id.startsWith('GHSA-')) {
-      return osvDetails.id;
-    }
-
-    const ghsaAliases = (osvDetails.aliases ?? []).filter((a) => a.startsWith('GHSA-'));
-    if (ghsaAliases.length > 0) {
-      return [...ghsaAliases].sort()[0];
-    }
-
-    const cveMap = githubIdByPackageAndCve.get(pkgKey);
-    if (cveMap) {
-      for (const alias of osvDetails.aliases ?? []) {
-        if (alias.startsWith('CVE-')) {
-          const ghsaId = cveMap.get(alias);
-          if (ghsaId) {
-            return ghsaId;
-          }
-        }
-      }
-    }
-
-    return osvDetails.id;
-  }
-
-  const rekeyedGithub: SourceResult['findings'] = [];
-  const githubDetailsByCanonical = new Map<string, GithubDetails>();
-
-  for (const finding of githubFindings) {
-    const details = finding.details as unknown as GithubDetails;
-    const pkgKey = `${details.ecosystem}:${details.name}@${details.version}`;
-    const canonicalId = `poltergeist:${details.owner}/${details.repo}:${details.ecosystem}:${details.name}@${details.version}:${details.ghsa_id}`;
-    rekeyedGithub.push({ ...finding, id: canonicalId });
-    githubDetailsByCanonical.set(canonicalId, details);
-  }
-
-  const rekeyedOsv: SourceResult['findings'] = [];
-  const osvDetailsByCanonical = new Map<string, OsvDetails>();
-
-  for (const finding of osvFindings) {
-    const details = finding.details as unknown as OsvDetails;
-    const pkgKey = `${details.ecosystem}:${details.name}@${details.version}`;
-    const canonicalId = canonicalizeOsvId(details, pkgKey);
-    const finalId = `poltergeist:${details.owner}/${details.repo}:${details.ecosystem}:${details.name}@${details.version}:${canonicalId}`;
-    rekeyedOsv.push({ ...finding, id: finalId });
-    osvDetailsByCanonical.set(finalId, details);
-  }
-
-  const merged = mergeById([
-    { sourceName: 'github', findings: rekeyedGithub, fetchedAt: new Date().toISOString() },
-    { sourceName: 'osv', findings: rekeyedOsv, fetchedAt: new Date().toISOString() },
-  ]);
-
-  const findings: PartialFinding[] = [];
-  for (const mergedFinding of merged) {
-    const githubDetails = githubDetailsByCanonical.get(mergedFinding.id);
-    const osvDetails = osvDetailsByCanonical.get(mergedFinding.id);
-
-    let title: string;
-    let summary: string;
-    let url: string | undefined;
-
-    if (mergedFinding.id.includes(':GHSA-')) {
-      const parts = mergedFinding.id.split(':');
-      const ghsaId = parts[parts.length - 1];
-      url = `https://github.com/advisories/${ghsaId}`;
-      if (githubDetails) {
-        title = `${githubDetails.name}@${githubDetails.version}: ${githubDetails.summary ?? 'no summary'}`;
-        summary = (githubDetails.description ?? 'no description').slice(0, 280);
-      } else if (osvDetails) {
-        title = `${osvDetails.name}@${osvDetails.version}: ${osvDetails.summary ?? 'no summary'}`;
-        summary = (osvDetails.description ?? 'no description').slice(0, 280);
-      } else {
-        title = mergedFinding.title;
-        summary = 'no description';
-      }
-    } else {
-      const parts = mergedFinding.id.split(':');
-      const osvId = parts[parts.length - 1];
-      url = `https://osv.dev/vulnerability/${osvId}`;
-      if (osvDetails) {
-        title = `${osvDetails.name}@${osvDetails.version}: ${osvDetails.summary ?? 'no summary'}`;
-        summary = (osvDetails.description ?? 'no description').slice(0, 280);
-      } else {
-        title = mergedFinding.title;
-        summary = 'no description';
-      }
-    }
-
-    const severity = computeSeverity(githubDetails, osvDetails);
-    const fix = computeFix(githubDetails, osvDetails);
-
-    findings.push({
-      id: mergedFinding.id,
-      title,
-      summary,
-      url,
-      severity,
-      status: mergedFinding.sources.length >= 2 ? 'confirmed' : 'ghost',
-      sources: mergedFinding.sources,
-      evidence: mergedFinding.evidence,
-      fix,
-    });
-  }
-
-  return findings;
+export function canonicalOsvId(
+  id: string,
+  aliases: readonly string[],
+  ghsaByCve: ReadonlyMap<string, string> = new Map(),
+): string {
+  if (id.startsWith('GHSA-')) return id;
+  const ghsaAlias = aliases.filter((alias) => alias.startsWith('GHSA-')).sort()[0];
+  if (ghsaAlias) return ghsaAlias;
+  const viaCve = aliases.flatMap((alias) => (alias.startsWith('CVE-') ? (ghsaByCve.get(alias) ?? []) : [])).sort()[0];
+  return viaCve ?? id;
 }
 
-function computeSeverity(githubDetails: GithubDetails | undefined, osvDetails: OsvDetails | undefined): 'critical' | 'high' | 'medium' | 'low' | 'info' {
-  if (githubDetails?.severity) {
-    const severity = githubDetails.severity.toLowerCase();
-    if (['critical', 'high', 'medium', 'low'].includes(severity)) {
-      return severity as 'critical' | 'high' | 'medium' | 'low';
+export function rules(results: SourceResult[], _config?: Config): PartialFinding[] {
+  const ghsaByCve = githubCveIndex(results);
+  const github = new Map<string, GithubDetails>();
+  const osv = new Map<string, OsvDetails[]>();
+
+  const rekeyed = results.map((result) => ({
+    ...result,
+    findings: result.findings.map((finding) => {
+      if (result.sourceName === 'github' && isGithubDetails(finding.details)) {
+        const id = findingId(finding.details, finding.details.ghsa_id);
+        if (!github.has(id)) github.set(id, finding.details);
+        return { id, title: finding.title };
+      }
+      if (result.sourceName === 'osv' && isOsvDetails(finding.details)) {
+        const details = finding.details;
+        const canonical = canonicalOsvId(details.id, details.aliases, ghsaByCve.get(packageKey(details)));
+        const id = findingId(details, canonical);
+        osv.set(id, [...(osv.get(id) ?? []), details]);
+        return { id, title: finding.title };
+      }
+      return { id: finding.id, title: finding.title };
+    }),
+  }));
+
+  return mergeById(rekeyed).map((merged) => {
+    const advisory = merged.id.slice(merged.id.lastIndexOf(':') + 1);
+    const gh = github.get(merged.id);
+    const osvDetails = [...(osv.get(merged.id) ?? [])].sort(
+      (a, b) => Number(b.id === advisory) - Number(a.id === advisory),
+    );
+    const pkg = gh ?? osvDetails[0] ?? parseFindingId(merged.id);
+    const label = pkg ? `${pkg.name}@${pkg.version}` : merged.id;
+    const description = gh?.description ?? osvDetails.find((d) => d.description)?.description;
+    const advisorySummary = gh?.summary ?? osvDetails.find((d) => d.summary)?.summary;
+    const evidenceText = merged.evidence.map((entry) => entry.text).join(' / ');
+
+    return {
+      id: merged.id,
+      title: `${label}: ${advisorySummary ?? advisory}`,
+      summary: truncate(description ?? advisorySummary ?? evidenceText),
+      severity: severityOf(gh, osvDetails),
+      status: new Set(merged.sources).size >= 2 ? 'confirmed' : 'ghost',
+      sources: merged.sources,
+      evidence: merged.evidence,
+      url: advisory.startsWith('GHSA-')
+        ? `https://github.com/advisories/${advisory}`
+        : `https://osv.dev/vulnerability/${advisory}`,
+      fix: pkg ? fixOf(pkg.ecosystem, pkg.name, pkg.version, gh, osvDetails) : undefined,
+    };
+  });
+}
+
+function githubCveIndex(results: SourceResult[]): Map<string, Map<string, string>> {
+  const index = new Map<string, Map<string, string>>();
+  for (const result of results) {
+    if (result.sourceName !== 'github') continue;
+    for (const finding of result.findings) {
+      if (!isGithubDetails(finding.details) || !finding.details.cve_id) continue;
+      const key = packageKey(finding.details);
+      const byCve = index.get(key) ?? new Map<string, string>();
+      const known = byCve.get(finding.details.cve_id);
+      if (!known || finding.details.ghsa_id < known) byCve.set(finding.details.cve_id, finding.details.ghsa_id);
+      index.set(key, byCve);
     }
   }
+  return index;
+}
 
-  if (osvDetails?.database_specific?.severity) {
-    const severity = osvDetails.database_specific.severity.toLowerCase();
-    if (['critical', 'high', 'medium', 'low'].includes(severity)) {
-      return severity as 'critical' | 'high' | 'medium' | 'low';
+function severityOf(gh: GithubDetails | undefined, osvDetails: OsvDetails[]): Severity {
+  const fromGithub = normaliseSeverity(gh?.severity);
+  if (fromGithub) return fromGithub;
+  for (const details of osvDetails) {
+    const fromDatabase = normaliseSeverity(details.database_specific?.severity);
+    if (fromDatabase) return fromDatabase;
+  }
+  for (const details of osvDetails) {
+    for (const entry of details.severity ?? []) {
+      if (entry.type !== 'CVSS_V3') continue;
+      const score = cvss3BaseScore(entry.score);
+      if (score !== undefined) return severityFromScore(score);
     }
   }
-
-  const cvss = osvDetails?.severity.find((s) => s.type === 'CVSS_V3');
-  if (cvss) {
-    const score = parseFloat(cvss.score);
-    if (!isNaN(score)) {
-      if (score >= 9.0) return 'critical';
-      if (score >= 7.0) return 'high';
-      if (score >= 4.0) return 'medium';
-      if (score >= 0.1) return 'low';
-    }
-  }
-
   return 'info';
 }
 
-function compareVersions(ecosystem: string, a: string, b: string): number {
-  if (ecosystem === 'npm' || ecosystem === 'PyPI') {
-    return compareSemverLike(a, b);
+function normaliseSeverity(value: string | undefined): Exclude<Severity, 'info'> | undefined {
+  switch (value?.toLowerCase()) {
+    case 'critical':
+      return 'critical';
+    case 'high':
+      return 'high';
+    case 'medium':
+    case 'moderate':
+      return 'medium';
+    case 'low':
+      return 'low';
+    default:
+      return undefined;
   }
-  return a.localeCompare(b);
 }
 
-function compareSemverLike(a: string, b: string): number {
-  const partsA = parseVersion(a);
-  const partsB = parseVersion(b);
+function fixOf(
+  ecosystem: Ecosystem,
+  name: string,
+  installed: string,
+  gh: GithubDetails | undefined,
+  osvDetails: OsvDetails[],
+): Fix | undefined {
+  const above = (versions: Iterable<string>) =>
+    [...new Set(versions)].filter((version) => compareVersions(ecosystem, version, installed) > 0);
+  const fromGithub = above(gh?.fixed_versions ?? []);
+  const fromOsv = above(osvDetails.flatMap((details) => details.fixed ?? []));
+  const lowestGithub = lowestVersion(ecosystem, fromGithub);
+  const lowestOsv = lowestVersion(ecosystem, fromOsv);
 
-  for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-    const numA = partsA[i] ?? 0;
-    const numB = partsB[i] ?? 0;
-    if (numA !== numB) {
-      return numA - numB;
+  if (lowestGithub && lowestOsv) {
+    const shared = fromGithub.filter((version) => fromOsv.some((other) => compareVersions(ecosystem, version, other) === 0));
+    const lowestShared = lowestVersion(ecosystem, shared);
+    if (lowestShared) {
+      return { value: lowestShared, text: `Upgrade ${name} to ${lowestShared} or later (OSV and GitHub agree).` };
     }
+    const higher = compareVersions(ecosystem, lowestGithub, lowestOsv) >= 0 ? lowestGithub : lowestOsv;
+    return {
+      value: higher,
+      text: `Upgrade ${name} to ${higher} or later: GitHub names ${lowestGithub}, OSV names ${lowestOsv}.`,
+    };
   }
-
-  return 0;
+  if (lowestGithub) return { value: lowestGithub, text: `Upgrade ${name} to ${lowestGithub} or later (GitHub only).` };
+  if (lowestOsv) return { value: lowestOsv, text: `Upgrade ${name} to ${lowestOsv} or later (OSV only).` };
+  return undefined;
 }
 
-function parseVersion(version: string): number[] {
-  const parts = version.split('-')[0].split('.');
-  return parts.map((p) => parseInt(p, 10));
+function parseFindingId(id: string): { ecosystem: Ecosystem; name: string; version: string } | undefined {
+  const match = /^poltergeist:[^:]+:(npm|PyPI):(.+)@([^@:]+):[^:]+$/.exec(id);
+  return match ? { ecosystem: match[1] as Ecosystem, name: match[2], version: match[3] } : undefined;
 }
 
-function computeFix(githubDetails: GithubDetails | undefined, osvDetails: OsvDetails | undefined): { text: string; value?: string } | undefined {
-  const githubFixed = githubDetails?.fixed_versions ?? [];
-  const osvFixed = osvDetails?.fixed ?? [];
-
-  if (githubFixed.length === 0 && osvFixed.length === 0) {
-    return undefined;
-  }
-
-  const ecosystem = githubDetails?.ecosystem || osvDetails?.ecosystem || 'npm';
-  const githubSorted = [...githubFixed].sort((a, b) => compareVersions(ecosystem, a, b));
-  const osvSorted = [...osvFixed].sort((a, b) => compareVersions(ecosystem, a, b));
-
-  const shared = githubSorted.filter((v) => osvSorted.includes(v));
-
-  if (shared.length > 0) {
-    const lowestShared = shared[0];
-    return { text: 'Fixed in version', value: lowestShared };
-  }
-
-  if (githubFixed.length > 0 && osvFixed.length > 0) {
-    const highest = compareVersions(ecosystem, githubSorted[0], osvSorted[0]) > 0 ? githubSorted[0] : osvSorted[0];
-    return { text: `GitHub: ${githubSorted[0]}, OSV: ${osvSorted[0]}`, value: highest };
-  }
-
-  if (githubFixed.length > 0) {
-    return { text: `GitHub: ${githubSorted[0]}`, value: githubSorted[0] };
-  }
-
-  return { text: `OSV: ${osvSorted[0]}`, value: osvSorted[0] };
+function truncate(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().slice(0, SUMMARY_LENGTH);
 }
 
-export { rules };
+function isGithubDetails(details: unknown): details is GithubDetails {
+  const d = details as Partial<GithubDetails> | undefined;
+  return typeof d?.ghsa_id === 'string' && typeof d.name === 'string' && typeof d.version === 'string';
+}
+
+function isOsvDetails(details: unknown): details is OsvDetails {
+  const d = details as Partial<OsvDetails> | undefined;
+  return typeof d?.id === 'string' && Array.isArray(d.aliases) && typeof d.name === 'string';
+}

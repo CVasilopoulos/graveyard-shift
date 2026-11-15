@@ -1,181 +1,58 @@
 import { describe, expect, it } from 'vitest';
-import type { SourceResult } from 'graveyard-shift';
 import { rules } from '../../src/rules.js';
-import { configSchema } from '../../src/config.js';
+import { githubDetails, githubResult, osvDetails, osvResult } from './builders.js';
 
-function osvFinding(id: string, details: Record<string, unknown>): SourceResult['findings'][0] {
-  return {
-    id,
-    title: `OSV ${id}: summary`,
-    details,
-  };
-}
+const ADVISORY = 'GHSA-1234-5678-9abc';
+const severityOf = (...results: Parameters<typeof rules>[0]) => rules(results)[0].severity;
 
-function githubFinding(id: string, details: Record<string, unknown>): SourceResult['findings'][0] {
-  return {
-    id,
-    title: `GitHub ${details.ghsa_id}: summary`,
-    details,
-  };
-}
-
-describe('rules severity', () => {
-  it('uses GitHub severity when present', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [],
-            fixed: ['1.0.1'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      {
-        sourceName: 'github',
-        findings: [
-          githubFinding('poltergeist:o/r:npm:pkg@1.0.0:GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            ghsa_id: 'GHSA-1234-5678-9abc',
-            cve_id: 'CVE-2023-1234',
-            severity: 'critical',
-            fixed_versions: ['1.0.1'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-    ];
-
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
-
-    expect(findings[0].severity).toBe('critical');
+describe('severity', () => {
+  it('uses the GitHub severity when GitHub gives one', () => {
+    expect(
+      severityOf(
+        osvResult(osvDetails({ id: ADVISORY, database_specific: { severity: 'LOW' } })),
+        githubResult(githubDetails({ ghsa_id: ADVISORY, severity: 'critical' })),
+      ),
+    ).toBe('critical');
   });
 
-  it('uses OSV database_specific severity when GitHub has none', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [],
-            database_specific: { severity: 'HIGH' },
-            fixed: ['1.0.1'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      {
-        sourceName: 'github',
-        findings: [
-          githubFinding('poltergeist:o/r:npm:pkg@1.0.0:GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            ghsa_id: 'GHSA-1234-5678-9abc',
-            cve_id: 'CVE-2023-1234',
-            fixed_versions: ['1.0.1'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-    ];
-
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
-
-    expect(findings[0].severity).toBe('high');
+  it('reads the GitHub moderate spelling as medium', () => {
+    expect(severityOf(githubResult(githubDetails({ ghsa_id: ADVISORY, severity: 'moderate' })))).toBe('medium');
   });
 
-  it('computes severity from OSV CVSS score', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [{ type: 'CVSS_V3', score: '8.5' }],
-            fixed: ['1.0.1'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      {
-        sourceName: 'github',
-        findings: [
-          githubFinding('poltergeist:o/r:npm:pkg@1.0.0:GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            ghsa_id: 'GHSA-1234-5678-9abc',
-            cve_id: 'CVE-2023-1234',
-            fixed_versions: ['1.0.1'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-    ];
-
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
-
-    expect(findings[0].severity).toBe('high');
+  it('falls back to the OSV database severity and reads MODERATE as medium', () => {
+    expect(severityOf(osvResult(osvDetails({ id: ADVISORY, database_specific: { severity: 'MODERATE' } })))).toBe('medium');
+    expect(
+      severityOf(
+        osvResult(osvDetails({ id: ADVISORY, database_specific: { severity: 'HIGH' } })),
+        githubResult(githubDetails({ ghsa_id: ADVISORY, severity: 'unknown' })),
+      ),
+    ).toBe('high');
   });
 
-  it('defaults to info when no severity data is available', () => {
-    const results: SourceResult[] = [
-      {
-        sourceName: 'osv',
-        findings: [
-          osvFinding('GHSA-1234-5678-9abc', {
-            owner: 'o',
-            repo: 'r',
-            ecosystem: 'npm',
-            name: 'pkg',
-            version: '1.0.0',
-            id: 'GHSA-1234-5678-9abc',
-            aliases: [],
-            severity: [],
-            fixed: ['1.0.1'],
-          }),
-        ],
-        fetchedAt: new Date().toISOString(),
-      },
-      { sourceName: 'github', findings: [], fetchedAt: new Date().toISOString() },
-    ];
+  it('bands the CVSS v3 base score computed from the OSV vector when no source names a severity', () => {
+    const withVector = (score: string) => osvResult(osvDetails({ id: ADVISORY, severity: [{ type: 'CVSS_V3', score }] }));
+    expect(severityOf(withVector('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'))).toBe('critical');
+    expect(severityOf(withVector('CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:H'))).toBe('high');
+    expect(severityOf(withVector('CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N'))).toBe('medium');
+    expect(severityOf(withVector('CVSS:3.0/AV:L/AC:H/PR:H/UI:R/S:U/C:L/I:N/A:N'))).toBe('low');
+    expect(severityOf(withVector('CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N'))).toBe('info');
+  });
 
-    const config = configSchema.parse({ targets: [{ owner: 'o', repo: 'r', lockfiles: ['package-lock.json'] }] });
-    const findings = rules(results, config);
+  it('prefers the database severity of the OSV entry whose id is the canonical one', () => {
+    expect(
+      severityOf(
+        osvResult(
+          osvDetails({ id: 'PYSEC-2023-74', aliases: [ADVISORY], severity: [{ type: 'CVSS_V3', score: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H' }] }),
+          osvDetails({ id: ADVISORY, database_specific: { severity: 'LOW' } }),
+        ),
+      ),
+    ).toBe('low');
+  });
 
-    expect(findings[0].severity).toBe('info');
+  it('is info when there is only a CVSS v4 vector or nothing at all', () => {
+    expect(
+      severityOf(osvResult(osvDetails({ id: ADVISORY, severity: [{ type: 'CVSS_V4', score: 'CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N' }] }))),
+    ).toBe('info');
+    expect(severityOf(osvResult(osvDetails({ id: 'PYSEC-2020-73' })))).toBe('info');
   });
 });

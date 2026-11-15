@@ -128,6 +128,7 @@ Poltergeist is a watch-and-warn app built on the Graveyard Shift skeleton. It re
 3. WHEN only one source gives a fixed version, THE Rules SHALL use its lowest one and name that source in `fix.text`.
 4. WHEN no source gives a fixed version, THE finding SHALL have no `fix`.
 5. Version comparison SHALL use semver for npm and PEP 440 ordering for PyPI.
+6. Fixed versions that are not above the installed version SHALL be ignored before applying 10.1-10.4: they belong to another release line (minimist 1.2.5 is fixed in 1.2.6, and both sources also list 0.2.4 for the 0.x line). Added in review.
 
 ### Requirement 11: Notifications
 
