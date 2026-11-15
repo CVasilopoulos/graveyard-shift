@@ -117,6 +117,63 @@ describe('npm parser', () => {
   });
 });
 
+describe('npm parser edge cases', () => {
+  it('keeps two versions of the same package installed at different paths', () => {
+    const content = JSON.stringify({
+      lockfileVersion: 3,
+      packages: {
+        'node_modules/qs': { version: '6.7.0' },
+        'node_modules/express/node_modules/qs': { version: '6.11.0' },
+        'node_modules/body-parser/node_modules/qs': { version: '6.7.0' },
+      },
+    });
+
+    expect(parseNpmLockfile(content)).toEqual(
+      new Set([
+        { name: 'qs', version: '6.7.0' },
+        { name: 'qs', version: '6.11.0' },
+      ]),
+    );
+  });
+
+  it('takes the name after the last node_modules/ for nested scoped packages', () => {
+    const content = JSON.stringify({
+      lockfileVersion: 2,
+      packages: { 'node_modules/a/node_modules/@scope/b': { version: '1.2.3' } },
+    });
+
+    expect(parseNpmLockfile(content)).toEqual(new Set([{ name: '@scope/b', version: '1.2.3' }]));
+  });
+
+  it('skips workspace folders that are not under node_modules', () => {
+    const content = JSON.stringify({
+      lockfileVersion: 3,
+      packages: {
+        '': { name: 'root' },
+        'packages/tool': { name: 'tool' },
+        'node_modules/tool': { resolved: 'packages/tool', link: true },
+        'node_modules/zod': { version: '4.6.7' },
+      },
+    });
+
+    expect(parseNpmLockfile(content)).toEqual(new Set([{ name: 'zod', version: '4.6.7' }]));
+  });
+
+  it('never reads the version from the resolved URL', () => {
+    const content = JSON.stringify({
+      lockfileVersion: 3,
+      packages: { 'node_modules/left-pad': { resolved: 'https://registry.npmjs.org/left-pad/-/left-pad-1.3.0.tgz' } },
+    });
+
+    expect(() => parseNpmLockfile(content)).toThrow('Missing "version" for package at node_modules/left-pad');
+  });
+
+  it('rejects input that is not JSON', () => {
+    expect(() => parseNpmLockfile('lockfileVersion: 3')).toThrow('Invalid JSON in lockfile');
+    expect(() => parseNpmLockfile('')).toThrow('Invalid JSON in lockfile');
+  });
+});
+
 describe('npm parser property tests', () => {
   it('property 1: round-trip preserves packages', () => {
     const genName = fc.stringMatching(/^(@[a-z0-9-]{1,10}\/)?[a-z0-9][a-z0-9._-]{0,20}$/);

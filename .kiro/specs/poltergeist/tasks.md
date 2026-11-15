@@ -8,45 +8,45 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
 
 ## Tasks
 
-- [ ] 1. Scaffold the workspace and Poltergeist package
+- [x] 1. Scaffold the workspace and Poltergeist package
   - Verify the repo root `package.json` declares `"workspaces": ["skeleton", "apps/*"]` and `"private": true`
   - Create `apps/poltergeist/package.json` with `"name": "poltergeist"`, `"version": "0.1.0"`, `"type": "module"`, `"main": "./dist/index.js"`, `"dependencies": { "graveyard-shift": "*" }`, and pinned dev deps (`typescript`, `vitest`, `fast-check`, `@vitest/coverage-v8`)
-  - Create `apps/poltergeist/tsconfig.json` with `"extends": "../skeleton/tsconfig.json"`, `"compilerOptions": { "outDir": "./dist", "rootDir": "./src" }`
+  - Create `apps/poltergeist/tsconfig.json` with `"extends": "../../skeleton/tsconfig.json"`, `"compilerOptions": { "outDir": "./dist", "rootDir": "./src" }` and `"include": ["src"]` (corrected in review: `../skeleton` resolved to `apps/skeleton`, and the inherited `include` pointed at `skeleton/src`)
   - Create `apps/poltergeist/vitest.config.ts` with `coverage: { provider: "v8" }`
   - Do not create placeholder source or test files; later tasks create them (the verify hook checks every backticked path of a ticked task)
   - Add `"test": "vitest run"` and `"build": "tsc"` scripts to `apps/poltergeist/package.json`
   - _Requirements: 15.1, 15.2, 15.3, 15.4_
 
-- [ ] 2. Implement parsers with property tests
-  - [ ] 2.1 Write `apps/poltergeist/src/parsers/npm.ts`
+- [x] 2. Implement parsers with property tests
+  - [x] 2.1 Write `apps/poltergeist/src/parsers/npm.ts`
     - Validate JSON with `lockfileVersion` 2 or 3 and `packages` map
     - Skip `""` (root) and entries with `link: true`
     - Extract name from key (part after last `node_modules/`); extract version from `version` field
     - Return `Set<{name: string, version: string}>`
     - Throw descriptive error on invalid input
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
-  - [ ] 2.2 Write `apps/poltergeist/src/parsers/pip.ts`
+  - [x] 2.2 Write `apps/poltergeist/src/parsers/pip.ts`
     - Strip inline comments, environment markers (`;`), extras (`[...]`)
     - Join backslash-continued lines
     - Skip blank lines, comments, options (`-r`, `-e`, `--index-url`, `--hash`)
     - Parse `name==version`; skip unpinned lines; return `{ packages, skipped: { blank, comment, option, unpinned } }`
     - Normalise name: lowercase, replace `_-.` runs with `-` (PEP 503)
     - _Requirements: 4.1, 4.2, 4.3, 4.4_
-  - [ ] 2.3 Write property tests for npm parser in `apps/poltergeist/test/parsers/npm.test.ts`
+  - [x] 2.3 Write property tests for npm parser in `apps/poltergeist/test/parsers/npm.test.ts`
     - **Property 1: npm round-trip** — for any `Set<{name, version}>`, generating v3 lockfile and parsing returns same set
     - Generate names with `fc.stringMatching(/^(@[a-z0-9-]{1,10}\/)?[a-z0-9][a-z0-9._-]{0,20}$/)` and versions with `fc.tuple(fc.nat(50), fc.nat(50), fc.nat(50))` joined by dots
     - _Requirements: 13.1, 3.6_
-  - [ ] 2.4 Write property tests for pip parser in `apps/poltergeist/test/parsers/pip.test.ts`
+  - [x] 2.4 Write property tests for pip parser in `apps/poltergeist/test/parsers/pip.test.ts`
     - **Property 2: pip idempotence** — `normalise(normalise(name)) === normalise(name)`
     - **Property 3: pip round-trip** — writing a set of normalised (name, version) pairs as `name==version` lines with random comments, markers and extras, then parsing, returns the same package set
     - Generate names with `fc.stringMatching(/^[A-Za-z0-9][A-Za-z0-9._-]{0,30}$/)`
     - _Requirements: 13.1, 4.4, 4.5_
-  - [ ] 2.5 Write unit tests for parsers in `apps/poltergeist/test/parsers/npm.test.ts` and `apps/poltergeist/test/parsers/pip.test.ts`
+  - [x] 2.5 Write unit tests for parsers in `apps/poltergeist/test/parsers/npm.test.ts` and `apps/poltergeist/test/parsers/pip.test.ts`
     - npm: valid v2/v3 lockfiles, missing `packages`, empty, link entries, scoped packages
     - pip: pinned, extras, markers, comments, options, unpinned, blank lines
     - _Requirements: 13.1_
 
-- [ ] 3. Checkpoint — run `npm test` in `apps/poltergeist/` for parsers
+- [x] 3. Checkpoint — run `npm test` in `apps/poltergeist/` for parsers
 
 - [ ] 4. Implement lockfiles
   - [ ] 4.1 Write `apps/poltergeist/src/lockfiles.ts`

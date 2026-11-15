@@ -2,7 +2,7 @@ export function parseNpmLockfile(content: string): Set<{ name: string; version: 
   let data: unknown;
   try {
     data = JSON.parse(content);
-  } catch (e) {
+  } catch {
     throw new Error('Invalid JSON in lockfile');
   }
 
@@ -20,21 +20,16 @@ export function parseNpmLockfile(content: string): Set<{ name: string; version: 
     throw new Error('Lockfile missing "packages" map');
   }
 
-  const byName = new Map<string, { name: string; version: string }>();
+  const byNameAndVersion = new Map<string, { name: string; version: string }>();
 
-  for (const key of Object.keys(packages)) {
+  for (const [key, entry] of Object.entries(packages as Record<string, unknown>)) {
     if (key === '') {
       continue;
     }
 
-    const pkg = packages[key] as { version?: string; link?: boolean };
-    if (pkg.link) {
+    const pkg = (typeof entry === 'object' && entry !== null ? entry : {}) as { version?: unknown; link?: unknown };
+    if (pkg.link === true) {
       continue;
-    }
-
-    const version = pkg.version;
-    if (typeof version !== 'string') {
-      throw new Error(`Missing "version" for package at ${key}`);
     }
 
     const parts = key.split('node_modules/');
@@ -42,9 +37,14 @@ export function parseNpmLockfile(content: string): Set<{ name: string; version: 
       continue;
     }
 
+    const version = pkg.version;
+    if (typeof version !== 'string' || version === '') {
+      throw new Error(`Missing "version" for package at ${key}`);
+    }
+
     const name = parts[parts.length - 1];
-    byName.set(name, { name, version });
+    byNameAndVersion.set(`${name}@${version}`, { name, version });
   }
 
-  return new Set(byName.values());
+  return new Set(byNameAndVersion.values());
 }

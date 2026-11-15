@@ -6,7 +6,7 @@ export function parsePipRequirements(content: string): {
   packages: Set<{ name: string; version: string }>;
   skipped: { blank: number; comment: number; option: number; unpinned: number };
 } {
-  const lines = content.split('\n');
+  const lines = content.split(/\r?\n/);
   const joinedLines: string[] = [];
   let currentLine = '';
 
@@ -24,7 +24,7 @@ export function parsePipRequirements(content: string): {
     joinedLines.push(currentLine);
   }
 
-  const packages = new Set<{ name: string; version: string }>();
+  const packages = new Map<string, { name: string; version: string }>();
   const skipped = { blank: 0, comment: 0, option: 0, unpinned: 0 };
 
   for (const line of joinedLines) {
@@ -65,16 +65,15 @@ export function parsePipRequirements(content: string): {
 
     const normalizedName = normalizeName(name);
 
-    const spaceIndex = versionPart.indexOf(' ');
-    const version = spaceIndex === -1 ? versionPart : versionPart.slice(0, spaceIndex);
+    const version = versionPart.split(/\s+/)[0];
 
-    if (normalizedName === '' || version === '') {
+    if (normalizedName === '' || !/^[0-9A-Za-z][0-9A-Za-z.+!_-]*$/.test(version)) {
       skipped.unpinned++;
       continue;
     }
 
-    packages.add({ name: normalizedName, version });
+    packages.set(`${normalizedName}@${version}`, { name: normalizedName, version });
   }
 
-  return { packages, skipped };
+  return { packages: new Set(packages.values()), skipped };
 }
