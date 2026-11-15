@@ -154,17 +154,24 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Include URLs and affected/fixed versions
     - _Requirements: 12.2_
 
-- [ ] 11. Update skeleton with issuePrefix change and test
-  - [ ] 11.1 Update `skeleton/src/core/types.ts`, `skeleton/src/notify/notifier.ts` and `skeleton/src/core/runner.ts`
+- [x] 11. Update skeleton with issuePrefix change and test
+  - [x] 11.1 Update `skeleton/src/core/types.ts`, `skeleton/src/notify/notifier.ts` and `skeleton/src/core/runner.ts`
     - Add optional `issuePrefix?: string` to the `AppDefinition` theme type and to `NotifierOptions`
     - Update `formatIssueTitleWithId` to prefix the title with `issuePrefix` when set
     - The runner passes `appDef.theme.issuePrefix` to `notify` when it is set
     - Do this before task 8.2, which uses the new theme field
     - _Requirements: 11.2, 15.4_
-  - [ ] 11.2 Add tests in `skeleton/test/notify/notifier.test.ts` and `skeleton/test/runner/runner.test.ts`
+  - [x] 11.2 Add tests in `skeleton/test/notify/notifier.test.ts` and `skeleton/test/runner/runner.test.ts`
     - Issue titles start with the prefix when `issuePrefix` is supplied and are unchanged otherwise
     - The runner passes the theme prefix to the notifier
     - _Requirements: 11.2, 15.4_
+  - [x] 11.3 Add `post` to the skeleton HTTP client in `skeleton/src/sources/http.ts` with tests in `skeleton/test/sources/http.test.ts`
+    - Added in review: OSV querybatch is a POST and the helper only had `get`; the POST gets the same timeout, retries, Retry-After handling, per-host limit and User-Agent
+    - Do this before task 5
+    - _Requirements: 2.1, 5.2, 15.3_
+  - [x] 11.4 Load the app entry point from the `main` field of the app package.json in `skeleton/src/cli/appModule.ts` with tests in `skeleton/test/cli/appModule.test.ts`
+    - Added in review: the CLI imported `<appDir>/index.js`, which a TypeScript app built to `dist/` does not have, so task 12 could not run
+    - _Requirements: 1.1, 15.2_
 
 - [ ] 12. Final checkpoint — full test suite and dry run
   - Run `npm test` in `apps/poltergeist/` and verify all tests pass offline

@@ -142,6 +142,57 @@ describe('HTTP Client', () => {
     expect(capturedHeaders?.['Authorization']).toBe('Bearer token123');
   });
 
+  it('posts a JSON body with the User-Agent and a JSON content type', async () => {
+    let captured: RequestInit | undefined;
+    globalThis.fetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      captured = init;
+      return new Response('{"results":[]}', { status: 200 });
+    }) as any;
+
+    const client = createHttpClient({ userAgent: 'test-client/1.0 (+https://github.com/test/repo)' });
+    const response = await client.post('https://example.com/query', { queries: [{ version: '1.0.0' }] });
+
+    expect(response.status).toBe(200);
+    expect(captured?.method).toBe('POST');
+    expect(captured?.body).toBe('{"queries":[{"version":"1.0.0"}]}');
+    const headers = captured?.headers as Record<string, string>;
+    expect(headers['User-Agent']).toBe('test-client/1.0 (+https://github.com/test/repo)');
+    expect(headers['Content-Type']).toBe('application/json');
+  });
+
+  it('retries a POST on 503 and resends the same body', async () => {
+    const url = 'https://example.com/query';
+    const bodies: unknown[] = [];
+    setupResponses(url, [
+      { status: 503, headers: { 'retry-after': '0' }, body: 'busy' },
+      { status: 200, headers: {}, body: '{"results":[]}' },
+    ]);
+    const mocked = globalThis.fetch as unknown as (u: string, i?: RequestInit) => Promise<Response>;
+    globalThis.fetch = vi.fn(async (u: string, i?: RequestInit) => {
+      bodies.push(i?.body);
+      return mocked(u, i);
+    }) as any;
+
+    const response = await createHttpClient({}).post(url, { queries: [] });
+
+    expect(response.status).toBe(200);
+    expect(bodies).toEqual(['{"queries":[]}', '{"queries":[]}']);
+  });
+
+  it('sends GET requests without a method override or body', async () => {
+    let captured: RequestInit | undefined;
+    globalThis.fetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      captured = init;
+      return new Response('ok', { status: 200 });
+    }) as any;
+
+    await createHttpClient({}).get('https://example.com/api');
+
+    expect(captured?.method).toBeUndefined();
+    expect(captured?.body).toBeUndefined();
+    expect((captured?.headers as Record<string, string>)['Content-Type']).toBeUndefined();
+  });
+
   it('should retry on 500 and succeed on third attempt', async () => {
     const url = 'https://example.com/api';
     setupResponses(url, [

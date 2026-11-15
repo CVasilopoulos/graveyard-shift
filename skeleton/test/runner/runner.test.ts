@@ -178,6 +178,15 @@ describe('runApp', () => {
     expect(vi.mocked(notify).mock.calls[1][2]).toEqual({ dryRun: false });
   });
 
+  it('passes the theme issue prefix to the notifier', async () => {
+    vi.setSystemTime(new Date(T1));
+    const configPath = path.join(dir, 'config.json');
+    await fs.writeFile(configPath, JSON.stringify({ items: { alpha: ['a'], beta: ['a'] } }));
+    const prefixed = { ...app, theme: { ...app.theme, issuePrefix: '👻' } };
+    await runApp(prefixed, { appDir: dir, dataDir: path.join(dir, 'data'), configPath, dryRun: true });
+    expect(vi.mocked(notify).mock.calls[0][2]).toEqual({ dryRun: true, issuePrefix: '👻' });
+  });
+
   it('rejects an invalid config and names the failing field on stderr', async () => {
     const stderr = vi.spyOn(console, 'error').mockImplementation(() => {});
     await expect(run({ items: 'nope' }, T1)).rejects.toThrow(/Config validation failed/);

@@ -26,6 +26,7 @@ interface NotifierOptions {
   dryRun?: boolean;
   maxNewIssues?: number;
   maxNewPRs?: number;
+  issuePrefix?: string;
 }
 
 function notifierConfig(config: unknown): Omit<NotifierOptions, 'dryRun'> {
@@ -260,7 +261,11 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
   // 8. Notify
   try {
     const { notify } = await import('../notify/notifier.js');
-    const notifierOptions: NotifierOptions = { dryRun: opts.dryRun ?? false, ...notifierConfig(config) };
+    const notifierOptions: NotifierOptions = {
+      dryRun: opts.dryRun ?? false,
+      ...notifierConfig(config),
+      ...(appDef.theme.issuePrefix ? { issuePrefix: appDef.theme.issuePrefix } : {}),
+    };
     await notify(diff, allFinalFindings, notifierOptions);
   } catch (err) {
     // Notifier errors should not fail the run, but log them

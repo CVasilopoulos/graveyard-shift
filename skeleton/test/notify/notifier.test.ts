@@ -549,6 +549,38 @@ describe('notifier', () => {
     expect(body.title).toMatch(/id: cve-2024-12345/);
   });
 
+  it('starts every new issue title with the issue prefix when one is supplied', async () => {
+    process.env.GITHUB_TOKEN = 'fake-token';
+    process.env.GITHUB_REPOSITORY = 'owner/repo';
+
+    const appeared = createTestFinding({ id: 'vuln-a', title: 'Appeared haunting' });
+    const promoted = createTestFinding({ id: 'vuln-b', title: 'Promoted haunting' });
+
+    await notify(createTestDiff({ appeared: ['vuln-a'], promoted: ['vuln-b'] }), [appeared, promoted], {
+      issuePrefix: '👻',
+    });
+
+    const titles = apiCalls
+      .filter((call) => call.method === 'POST' && call.url === 'https://api.github.com/repos/owner/repo/issues')
+      .map((call) => JSON.parse(call.body || '{}').title);
+    expect(titles).toEqual([
+      '👻 [graveyard-shift] Appeared haunting (id: vuln-a)',
+      '👻 [graveyard-shift] Promoted haunting (id: vuln-b)',
+    ]);
+  });
+
+  it('leaves issue titles unprefixed when no issue prefix is supplied', async () => {
+    process.env.GITHUB_TOKEN = 'fake-token';
+    process.env.GITHUB_REPOSITORY = 'owner/repo';
+
+    await notify(createTestDiff({ appeared: ['vuln-c'] }), [createTestFinding({ id: 'vuln-c', title: 'Plain' })]);
+
+    const created = apiCalls.find(
+      (call) => call.method === 'POST' && call.url === 'https://api.github.com/repos/owner/repo/issues',
+    );
+    expect(JSON.parse(created?.body || '{}').title).toBe('[graveyard-shift] Plain (id: vuln-c)');
+  });
+
   it('includes fix details in issue body', async () => {
     process.env.GITHUB_TOKEN = 'fake-token';
     process.env.GITHUB_REPOSITORY = 'owner/repo';

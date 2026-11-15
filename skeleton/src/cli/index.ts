@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { stableStringify } from '../core/stableJson.js';
 import { runApp } from '../core/runner.js';
 import { createMcpServer } from '../mcp/server.js';
+import { resolveAppModule } from './appModule.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,8 +86,7 @@ async function cmdRun(args: string[]): Promise<void> {
   try {
     // Dynamic import of app definition
     const resolvedAppDir = path.resolve(appDir);
-    const appModulePath = path.join(resolvedAppDir, 'index.js');
-    const appModule = await import(appModulePath);
+    const appModule = await import(await resolveAppModule(resolvedAppDir));
     const appDef = appModule.default;
 
     if (!appDef) {
@@ -141,8 +141,7 @@ async function cmdSite(args: string[]): Promise<void> {
   try {
     // Dynamic import of app definition
     const resolvedAppDir = path.resolve(appDir);
-    const appModulePath = path.join(resolvedAppDir, 'index.js');
-    const appModule = await import(appModulePath);
+    const appModule = await import(await resolveAppModule(resolvedAppDir));
     const appDef = appModule.default;
 
     if (!appDef || !appDef.theme) {

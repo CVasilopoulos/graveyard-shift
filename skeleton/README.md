@@ -88,8 +88,11 @@ const theme = {
     ghost: 'Ghost',
     resolved: 'Laid to rest',
   },
+  issuePrefix: '👻',
 };
 ```
+
+`issuePrefix` is optional; when set, the notifier starts every issue title it opens with it.
 
 ## Type Reference
 
@@ -120,7 +123,7 @@ Core data types used throughout the skeleton.
 | sources | `(config: TSchema) => Promise<SourceResult>[]` | ✓ |
 | rules | `(results: SourceResult[], config: TSchema) => PartialFinding[]` | ✓ |
 | configSchema | `ZodTypeAny` | ✓ |
-| theme | `{ name, tagline, accentColor, labels? }` | ✓ |
+| theme | `{ name, tagline, accentColor, labels?, issuePrefix? }` | ✓ |
 | **Evidence** | | |
 | sourceName | `string` | ✓ |
 | text | `string` | ✓ |
@@ -144,7 +147,7 @@ The [`createHttpClient`](./src/sources/http.ts) factory builds an HTTP client wi
 | `maxAttempts` | `number` | `3` | Total attempts (including retries) before giving up. |
 | `concurrencyPerHost` | `number` | `4` | Maximum concurrent requests per hostname. |
 
-Use the returned client's `get()` method. It handles 429, 503, and 5xx with exponential backoff (reads `Retry-After` header if present). Non-retryable 4xx errors throw immediately.
+Use the returned client's `get(url, opts?)` or `post(url, body, opts?)` method; `post` sends `body` as JSON. Both handle 429, 503, and 5xx with exponential backoff (reads `Retry-After` header if present). Non-retryable 4xx errors throw immediately.
 
 ## MCP Server
 
@@ -215,6 +218,6 @@ The [`graveyard-shift`](./src/cli/index.ts) CLI provides three commands.
 
 | Command | Arguments | Description | Exit Code |
 |---------|-----------|-------------|-----------|
-| **run** | `<appDir> [--config FILE] [--data DIR] [--dry-run]` | Execute the full app cycle: fetch sources, apply rules, diff, store, notify. `--config` defaults to `<appDir>/config.json`. `--data` defaults to `<appDir>/data`. `--dry-run` runs without notifying. | `0` on success; `1` on error |
+| **run** | `<appDir> [--config FILE] [--data DIR] [--dry-run]` | Execute the full app cycle: fetch sources, apply rules, diff, store, notify. The app module is the `main` of `<appDir>/package.json`, else `<appDir>/index.js`, and must default-export its `AppDefinition`. `--config` defaults to `<appDir>/config.json`. `--data` defaults to `<appDir>/data`. `--dry-run` runs without notifying. | `0` on success; `1` on error |
 | **site** | `<appDir> <outDir>` | Generate static dashboard assets from the app's theme. Copies skeleton dashboard files and writes `theme.json` to `<outDir>`. | `0` on success; `1` on error |
 | **mcp** | `<dataDirOrUrl>` | Start the MCP stdio server. `<dataDirOrUrl>` is either a local path or an `https://` URL to findings/runs JSON. | `0` on clean shutdown; `1` on error |

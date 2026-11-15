@@ -20,6 +20,7 @@ export interface HttpRequestOptions {
 
 export interface HttpClient {
   get(url: string, opts?: HttpRequestOptions): Promise<Response>;
+  post(url: string, body: unknown, opts?: HttpRequestOptions): Promise<Response>;
 }
 
 export class HttpError extends Error {
@@ -124,11 +125,12 @@ export function createHttpClient(opts: HttpClientOptions): HttpClient {
     return semaphores.get(hostname)!;
   }
 
-  async function get(url: string, opts?: HttpRequestOptions): Promise<Response> {
+  async function send(url: string, opts: HttpRequestOptions | undefined, body?: string): Promise<Response> {
     const timeoutMs = opts?.timeoutMs ?? defaultTimeoutMs;
     const maxAttempts = opts?.maxAttempts ?? defaultMaxAttempts;
-    const headers = {
+    const headers: Record<string, string> = {
       'User-Agent': opts?.userAgent ?? userAgent,
+      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       ...(opts?.headers ?? {}),
     };
 
@@ -145,7 +147,10 @@ export function createHttpClient(opts: HttpClientOptions): HttpClient {
 
       try {
         const signal = AbortSignal.timeout(timeoutMs);
-        const response = await fetch(url, { signal, headers });
+        const response = await fetch(
+          url,
+          body === undefined ? { signal, headers } : { method: 'POST', signal, headers, body },
+        );
 
         // Check for successful response
         if (response.ok) {
@@ -247,5 +252,8 @@ export function createHttpClient(opts: HttpClientOptions): HttpClient {
     throw lastError ?? new HttpError('Unknown error', 'unknown', url);
   }
 
-  return { get };
+  return {
+    get: (url, requestOpts) => send(url, requestOpts),
+    post: (url, body, requestOpts) => send(url, requestOpts, JSON.stringify(body)),
+  };
 }

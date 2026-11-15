@@ -78,6 +78,7 @@ export interface AppDefinition<TSchema extends z.ZodTypeAny> {
       ghost?: string;
       resolved?: string;
     };
+    issuePrefix?: string;
   };
 }
 

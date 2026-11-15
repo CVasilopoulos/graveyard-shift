@@ -11,6 +11,7 @@ export interface NotifierOptions {
   dryRun?: boolean;
   maxNewIssues?: number;
   maxNewPRs?: number;
+  issuePrefix?: string;
 }
 
 interface GitHubSearchResult {
@@ -36,8 +37,9 @@ function sanitizeBranchName(findingId: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-function formatIssueTitleWithId(title: string, findingId: string): string {
-  return `[graveyard-shift] ${title} (id: ${findingId})`;
+function formatIssueTitleWithId(title: string, findingId: string, issuePrefix?: string): string {
+  const prefix = issuePrefix ? `${issuePrefix} ` : '';
+  return `${prefix}[graveyard-shift] ${title} (id: ${findingId})`;
 }
 
 function formatIssueBody(finding: Finding): string {
@@ -149,7 +151,7 @@ export async function notify(
         console.log(`[NOTIFIER] Updated issue #${existingIssueNumber} for finding ${finding.id}`);
       } else {
         // Open new issue
-        const issueNumber = await createIssue(token, githubRepo, finding);
+        const issueNumber = await createIssue(token, githubRepo, finding, opts?.issuePrefix);
         openedIssues++;
         console.log(`[NOTIFIER] Opened issue #${issueNumber} for finding ${finding.id}`);
       }
@@ -214,7 +216,7 @@ export async function notify(
         );
       } else {
         // Open new issue
-        const issueNumber = await createIssue(token, githubRepo, finding);
+        const issueNumber = await createIssue(token, githubRepo, finding, opts?.issuePrefix);
         openedIssues++;
         console.log(`[NOTIFIER] Opened issue #${issueNumber} for promoted finding ${finding.id}`);
       }
@@ -326,11 +328,12 @@ async function createIssue(
   token: string,
   repo: string,
   finding: Finding,
+  issuePrefix?: string,
 ): Promise<number> {
   const [owner, repoName] = repo.split('/');
   const url = `https://api.github.com/repos/${owner}/${repoName}/issues`;
 
-  const title = formatIssueTitleWithId(finding.title, finding.id);
+  const title = formatIssueTitleWithId(finding.title, finding.id, issuePrefix);
   const body = formatIssueBody(finding);
 
   const payload = {
