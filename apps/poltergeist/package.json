@@ -1,0 +1,26 @@
+{
+  "name": "poltergeist",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Watches lockfiles and confirms a vulnerability only when OSV.dev and the GitHub Advisory Database agree",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "graveyard-shift": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@vitest/coverage-v8": "^5.0.5",
+    "fast-check": "^4.10.2",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}
