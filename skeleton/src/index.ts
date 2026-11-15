@@ -14,6 +14,7 @@ export type {
 } from './core/types.js';
 
 export { mergeById } from './core/mergeById.js';
+export type { PartialFinding } from './core/agreement.js';
 export { applyAgreementRule } from './core/agreement.js';
 export { computeDiff } from './core/diff.js';
 export { stableStringify } from './core/stableJson.js';
