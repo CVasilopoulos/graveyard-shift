@@ -48,41 +48,39 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
 
 - [x] 3. Checkpoint — run `npm test` in `apps/poltergeist/` for parsers
 
-- [ ] 4. Implement lockfiles
-  - [ ] 4.1 Write `apps/poltergeist/src/lockfiles.ts`
+- [x] 4. Implement lockfiles
+  - [x] 4.1 Write `apps/poltergeist/src/lockfiles.ts`
     - For each target in config, fetch from `https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}`
     - Use `createHttpClient({})` from skeleton (keep defaults)
     - Cache parsed `{ owner, repo, ecosystem, name, version }` by `{ owner, repo, ref, path }`
     - On error, throw descriptive error naming target and path
-    - Return `Set<{ owner, repo, ecosystem, name, version }>`
+    - Return `PackageVersion[]` of `{ owner, repo, ecosystem, name, version }`, one entry per target occurrence (design review amendment 3)
     - _Requirements: 2.1, 2.2, 2.3_
 
-- [ ] 5. Implement sources with recorded fixtures
-  - [ ] 5.1 Create OSV fixtures in `apps/poltergeist/test/fixtures/osv/`
-    - `querybatch-chunk.json`: batch response with multiple advisories
-    - `querybatch-page.json`: response with `next_page_token`
-    - `vulns-GHSA.json`: GHSA-id advisory with aliases, ranges, `withdrawn`
-    - `vulns-PYSEC.json`: PYSEC id with GHSA aliases
-    - `vulns-CVE-only.json`: CVE-linked advisory, no GHSA
-    - `vulns-withdrawn.json`: withdrawn advisory
-    - `vulns-no-fixed.json`: advisory with no fixed versions
-    - Each fixture is JSON array of `{ method, url, respondWith: { status, headers, body, delayMs } }`
+- [x] 5. Implement the sources `apps/poltergeist/src/sources/osv.ts` and `apps/poltergeist/src/sources/github.ts` with recorded fixtures (source files named in review; the task listed only their tests)
+  - [x] 5.1 Create OSV fixtures in `apps/poltergeist/test/fixtures/osv/`
+    - `querybatch-chunk.json`: the querybatch for the five demo package versions and the 17 `vulns/{id}` responses it leads to (GHSA ids with aliases and ranges, PYSEC ids with GHSA aliases and GIT ranges, the CVE-only PYSEC-2020-73)
+    - `vulns-withdrawn.json`: GHSA-pj86-cfqh-vqx6, withdrawn
+    - `vulns-no-fixed.json`: querybatch for diskcache 5.6.3 and its two advisories, which list no fixed version
+    - `vulns-404.json`: `vulns/{id}` for an id OSV does not know
+    - Each fixture is a JSON array of recorded `{ name, recordedAt, method, url, requestBody?, respondWith: { status, headers, body, delayMs } }`
+    - Changed in review: every fixture is a recorded live response (2026-11-15). OSV never paginates an npm or PyPI query (pagination starts above 1000 results per query; tensorflow 2.0.0 returns 745 without a token) and never lists withdrawn advisories in querybatch, so `querybatch-page.json` was dropped; the pagination and withdrawn tests build those two batch responses in the test and replay recorded `vulns` responses
     - _Requirements: 13.2, 5.2_
-  - [ ] 5.2 Create GitHub fixtures in `apps/poltergeist/test/fixtures/github/`
-    - `advisories-npm.json`: paginated npm advisories
-    - `advisories-pip.json`: paginated pip advisories
-    - `advisories-GHSA.json`: GHSA advisory with `severity`
-    - `advisories-CVE.json`: CVE-only advisory
-    - `advisories-withdrawn.json`: `withdrawn_at` set
-    - Each fixture is JSON array of `{ method, url, respondWith: { status, headers, body, delayMs } }`
+  - [x] 5.2 Create GitHub and lockfile fixtures in `apps/poltergeist/test/fixtures/github/` and `apps/poltergeist/test/fixtures/raw/`
+    - `advisories-npm.json`: express 4.17.1 (lists the withdrawn GHSA-pj86-cfqh-vqx6), lodash 4.17.15 (lists the withdrawn GHSA-8p5q-j9m2-g8wr), minimist 1.2.5
+    - `advisories-pip.json`: requests 2.25.0 and pandas 1.0.3 (empty list)
+    - `advisories-paginated.json`: the two `Link: rel="next"` pages for tensorflow 2.9.0 (106 advisories), each advisory cut down to the fields the source reads
+    - `raw/lockfile-404.json`: the demo package-lock.json while the repository is not public
+    - Each fixture is a JSON array of recorded `{ name, recordedAt, method, url, respondWith: { status, headers, body, delayMs } }`
+    - Changed in review: no npm package version has more than 100 GitHub advisories, so the paginated fixture is a PyPI one; withdrawn and CVE-only cases come from the demo recordings
     - _Requirements: 13.2, 6.2_
-  - [ ] 5.3 Write fixture-based tests for OSV source in `apps/poltergeist/test/sources/osv.test.ts`
-    - Implement `mockFetch` helper replacing `globalThis.fetch`
+  - [x] 5.3 Write fixture-based tests for OSV source in `apps/poltergeist/test/sources/osv.test.ts`
+    - Implement `mockFetch` helper replacing `globalThis.fetch` in `apps/poltergeist/test/mockFetch.ts`
     - Test: chunked querybatch (1000 per request), follow `next_page_token`
     - Test: GET `vulns/{id}` once per run (cache), skip withdrawn
     - Test: returns findings with `details` containing id, aliases, severity, ranges
     - _Requirements: 13.2, 5.2_
-  - [ ] 5.4 Write fixture-based tests for GitHub source in `apps/poltergeist/test/sources/github.test.ts`
+  - [x] 5.4 Write fixture-based tests for GitHub source in `apps/poltergeist/test/sources/github.test.ts`
     - Test: GET `advisories?ecosystem=<npm|pip>&affects=<name>@<version>&per_page=100`
     - Test: follow `Link: rel="next"` pages
     - Test: Bearer token when `GITHUB_TOKEN` present
@@ -121,14 +119,14 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
 
 - [ ] 7. Checkpoint — run `npm test` in `apps/poltergeist/` for lockfiles, sources, rules
 
-- [ ] 8. Implement config and theme
-  - [ ] 8.1 Write `apps/poltergeist/src/config.ts`
+- [x] 8. Implement config and theme
+  - [x] 8.1 Write `apps/poltergeist/src/config.ts`
     - Export zod schema with `targets` array: `{ owner, repo, ref?, lockfiles: string[] }`
     - `ref` defaults to `"main"`; `lockfiles` must be non-empty
     - Validate lockfile paths end in `package-lock.json` (npm) or `requirements.txt` (PyPI)
     - Export type `Config`
     - _Requirements: 1.1, 1.2, 1.4_
-  - [ ] 8.2 Write `apps/poltergeist/src/theme.ts`
+  - [x] 8.2 Write `apps/poltergeist/src/theme.ts`
     - Export the theme (typed as `AppDefinition["theme"]`, which gains `issuePrefix` in task 11) with `name: "Poltergeist"`, `tagline: "Something is rattling in your lockfile"`, `accentColor: "#8b5cf6"`, `labels: { confirmed: "haunting", ghost: "ghost", resolved: "laid to rest" }`, `issuePrefix: "👻"`
     - _Requirements: 14.1, 14.2, 11.2_
 

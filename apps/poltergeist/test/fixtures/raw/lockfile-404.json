@@ -1,0 +1,16 @@
+[
+  {
+    "name": "demo package-lock.json before the repository is public",
+    "recordedAt": "2026-11-15T17:16:47Z",
+    "method": "GET",
+    "url": "https://raw.githubusercontent.com/CVasilopoulos/graveyard-shift/main/apps/poltergeist/demo/haunted-house/package-lock.json",
+    "respondWith": {
+      "status": 404,
+      "headers": {
+        "content-type": "text/plain; charset=utf-8"
+      },
+      "body": "404: Not Found",
+      "delayMs": 0
+    }
+  }
+]

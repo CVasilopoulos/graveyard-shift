@@ -1,0 +1,720 @@
+[
+  {
+    "name": "advisories affecting requests 2.25.0",
+    "recordedAt": "2026-11-15T17:14:51Z",
+    "method": "GET",
+    "url": "https://api.github.com/advisories?ecosystem=pip&affects=requests%402.25.0&per_page=100",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": [
+        {
+          "ghsa_id": "GHSA-gc5v-m9x4-r6x2",
+          "cve_id": "CVE-2026-25645",
+          "url": "https://api.github.com/advisories/GHSA-gc5v-m9x4-r6x2",
+          "html_url": "https://github.com/advisories/GHSA-gc5v-m9x4-r6x2",
+          "summary": "Requests has Insecure Temp File Reuse in its extract_zipped_paths() utility function",
+          "description": "### Impact\nThe `requests.utils.extract_zipped_paths()` utility function uses a predictable filename when extracting files from zip archives into the system temporary directory. If the target file already exists, it is reused without validation. A local attacker with write access to the temp directory could pre-create a malicious file that would be loaded in place of the legitimate one.\n\n### Affected usages\n**Standard usage of the Requests library is not affected by this vulnerability.** Only applications that call `extract_zipped_paths()` directly are impacted.\n\n### Remediation\nUpgrade to at least Requests 2.33.0, where the library now extracts files to a non-deterministic location.\n\nIf developers are unable to upgrade, they can set `TMPDIR` in their environment to a directory with restricted write access.",
+          "type": "reviewed",
+          "severity": "medium",
+          "repository_advisory_url": "https://api.github.com/repos/psf/requests/security-advisories/GHSA-gc5v-m9x4-r6x2",
+          "source_code_location": "https://github.com/psf/requests",
+          "identifiers": [
+            {
+              "value": "GHSA-gc5v-m9x4-r6x2",
+              "type": "GHSA"
+            },
+            {
+              "value": "CVE-2026-25645",
+              "type": "CVE"
+            }
+          ],
+          "references": [
+            "https://github.com/psf/requests/security/advisories/GHSA-gc5v-m9x4-r6x2",
+            "https://github.com/psf/requests/commit/66d21cb07bd6255b1280291c4fafb71803cdb3b7",
+            "https://github.com/psf/requests/releases/tag/v2.33.0",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-25645",
+            "https://github.com/advisories/GHSA-gc5v-m9x4-r6x2"
+          ],
+          "published_at": "2026-03-25T16:56:28Z",
+          "updated_at": "2026-03-27T22:07:43Z",
+          "github_reviewed_at": "2026-03-25T16:56:28Z",
+          "nvd_published_at": "2026-03-25T17:16:52Z",
+          "withdrawn_at": null,
+          "vulnerabilities": [
+            {
+              "package": {
+                "ecosystem": "pip",
+                "name": "requests"
+              },
+              "vulnerable_version_range": "< 2.33.0",
+              "first_patched_version": "2.33.0",
+              "vulnerable_functions": []
+            }
+          ],
+          "cvss_severities": {
+            "cvss_v3": {
+              "vector_string": "CVSS:3.1/AV:L/AC:H/PR:L/UI:R/S:U/C:N/I:H/A:N",
+              "score": 4.4
+            },
+            "cvss_v4": {
+              "vector_string": null,
+              "score": 0.0
+            }
+          },
+          "cwes": [
+            {
+              "cwe_id": "CWE-377",
+              "name": "Insecure Temporary File"
+            }
+          ],
+          "credits": [
+            {
+              "user": {
+                "login": "Jaycelation",
+                "id": 128437438,
+                "node_id": "U_kgDOB6fMvg",
+                "avatar_url": "https://avatars.githubusercontent.com/u/128437438?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/Jaycelation",
+                "html_url": "https://github.com/Jaycelation",
+                "followers_url": "https://api.github.com/users/Jaycelation/followers",
+                "following_url": "https://api.github.com/users/Jaycelation/following{/other_user}",
+                "gists_url": "https://api.github.com/users/Jaycelation/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/Jaycelation/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/Jaycelation/subscriptions",
+                "organizations_url": "https://api.github.com/users/Jaycelation/orgs",
+                "repos_url": "https://api.github.com/users/Jaycelation/repos",
+                "events_url": "https://api.github.com/users/Jaycelation/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/Jaycelation/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "reporter"
+            },
+            {
+              "user": {
+                "login": "nateprewitt",
+                "id": 5271761,
+                "node_id": "MDQ6VXNlcjUyNzE3NjE=",
+                "avatar_url": "https://avatars.githubusercontent.com/u/5271761?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/nateprewitt",
+                "html_url": "https://github.com/nateprewitt",
+                "followers_url": "https://api.github.com/users/nateprewitt/followers",
+                "following_url": "https://api.github.com/users/nateprewitt/following{/other_user}",
+                "gists_url": "https://api.github.com/users/nateprewitt/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/nateprewitt/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/nateprewitt/subscriptions",
+                "organizations_url": "https://api.github.com/users/nateprewitt/orgs",
+                "repos_url": "https://api.github.com/users/nateprewitt/repos",
+                "events_url": "https://api.github.com/users/nateprewitt/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/nateprewitt/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "remediation_developer"
+            },
+            {
+              "user": {
+                "login": "sigmavirus24",
+                "id": 240830,
+                "node_id": "MDQ6VXNlcjI0MDgzMA==",
+                "avatar_url": "https://avatars.githubusercontent.com/u/240830?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/sigmavirus24",
+                "html_url": "https://github.com/sigmavirus24",
+                "followers_url": "https://api.github.com/users/sigmavirus24/followers",
+                "following_url": "https://api.github.com/users/sigmavirus24/following{/other_user}",
+                "gists_url": "https://api.github.com/users/sigmavirus24/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/sigmavirus24/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/sigmavirus24/subscriptions",
+                "organizations_url": "https://api.github.com/users/sigmavirus24/orgs",
+                "repos_url": "https://api.github.com/users/sigmavirus24/repos",
+                "events_url": "https://api.github.com/users/sigmavirus24/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/sigmavirus24/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "remediation_reviewer"
+            }
+          ],
+          "comments": 8,
+          "cvss": {
+            "vector_string": "CVSS:3.1/AV:L/AC:H/PR:L/UI:R/S:U/C:N/I:H/A:N",
+            "score": 4.4
+          },
+          "epss": {
+            "percentage": 0.00194,
+            "percentile": 0.09164
+          }
+        },
+        {
+          "ghsa_id": "GHSA-9hjg-9r4m-mvj7",
+          "cve_id": "CVE-2024-47081",
+          "url": "https://api.github.com/advisories/GHSA-9hjg-9r4m-mvj7",
+          "html_url": "https://github.com/advisories/GHSA-9hjg-9r4m-mvj7",
+          "summary": "Requests vulnerable to .netrc credentials leak via malicious URLs",
+          "description": "### Impact\n\nDue to a URL parsing issue, Requests releases prior to 2.32.4 may leak .netrc credentials to third parties for specific maliciously-crafted URLs.\n\n### Workarounds\nFor older versions of Requests, use of the .netrc file can be disabled with `trust_env=False` on your Requests Session ([docs](https://requests.readthedocs.io/en/latest/api/#requests.Session.trust_env)).\n\n### References\nhttps://github.com/psf/requests/pull/6965\nhttps://seclists.org/fulldisclosure/2025/Jun/2",
+          "type": "reviewed",
+          "severity": "medium",
+          "repository_advisory_url": "https://api.github.com/repos/psf/requests/security-advisories/GHSA-9hjg-9r4m-mvj7",
+          "source_code_location": "https://github.com/psf/requests",
+          "identifiers": [
+            {
+              "value": "GHSA-9hjg-9r4m-mvj7",
+              "type": "GHSA"
+            },
+            {
+              "value": "CVE-2024-47081",
+              "type": "CVE"
+            }
+          ],
+          "references": [
+            "https://github.com/psf/requests/security/advisories/GHSA-9hjg-9r4m-mvj7",
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-47081",
+            "https://github.com/psf/requests/pull/6965",
+            "https://github.com/psf/requests/commit/96ba401c1296ab1dda74a2365ef36d88f7d144ef",
+            "https://requests.readthedocs.io/en/latest/api/#requests.Session.trust_env",
+            "https://seclists.org/fulldisclosure/2025/Jun/2",
+            "http://www.openwall.com/lists/oss-security/2025/06/03/11",
+            "http://www.openwall.com/lists/oss-security/2025/06/03/9",
+            "http://www.openwall.com/lists/oss-security/2025/06/04/1",
+            "http://www.openwall.com/lists/oss-security/2025/06/04/6",
+            "https://github.com/advisories/GHSA-9hjg-9r4m-mvj7",
+            "https://github.com/psf/requests",
+            "https://github.com/psf/requests/releases/tag/v2.32.4",
+            "https://github.com/pypa/advisory-database/tree/main/vulns/requests/PYSEC-2026-1872.yaml",
+            "https://pypi.org/project/requests"
+          ],
+          "published_at": "2025-06-09T19:06:08Z",
+          "updated_at": "2026-10-19T19:51:00Z",
+          "github_reviewed_at": "2025-06-09T19:06:08Z",
+          "nvd_published_at": "2025-06-09T18:15:24Z",
+          "withdrawn_at": null,
+          "vulnerabilities": [
+            {
+              "package": {
+                "ecosystem": "pip",
+                "name": "requests"
+              },
+              "vulnerable_version_range": "< 2.32.4",
+              "first_patched_version": "2.32.4",
+              "vulnerable_functions": []
+            }
+          ],
+          "cvss_severities": {
+            "cvss_v3": {
+              "vector_string": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:N/A:N",
+              "score": 5.3
+            },
+            "cvss_v4": {
+              "vector_string": null,
+              "score": 0.0
+            }
+          },
+          "cwes": [
+            {
+              "cwe_id": "CWE-522",
+              "name": "Insufficiently Protected Credentials"
+            }
+          ],
+          "credits": [
+            {
+              "user": {
+                "login": "sethmlarson",
+                "id": 18519037,
+                "node_id": "MDQ6VXNlcjE4NTE5MDM3",
+                "avatar_url": "https://avatars.githubusercontent.com/u/18519037?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/sethmlarson",
+                "html_url": "https://github.com/sethmlarson",
+                "followers_url": "https://api.github.com/users/sethmlarson/followers",
+                "following_url": "https://api.github.com/users/sethmlarson/following{/other_user}",
+                "gists_url": "https://api.github.com/users/sethmlarson/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/sethmlarson/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/sethmlarson/subscriptions",
+                "organizations_url": "https://api.github.com/users/sethmlarson/orgs",
+                "repos_url": "https://api.github.com/users/sethmlarson/repos",
+                "events_url": "https://api.github.com/users/sethmlarson/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/sethmlarson/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "remediation_reviewer"
+            },
+            {
+              "user": {
+                "login": "jupenur",
+                "id": 3514914,
+                "node_id": "MDQ6VXNlcjM1MTQ5MTQ=",
+                "avatar_url": "https://avatars.githubusercontent.com/u/3514914?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/jupenur",
+                "html_url": "https://github.com/jupenur",
+                "followers_url": "https://api.github.com/users/jupenur/followers",
+                "following_url": "https://api.github.com/users/jupenur/following{/other_user}",
+                "gists_url": "https://api.github.com/users/jupenur/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/jupenur/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/jupenur/subscriptions",
+                "organizations_url": "https://api.github.com/users/jupenur/orgs",
+                "repos_url": "https://api.github.com/users/jupenur/repos",
+                "events_url": "https://api.github.com/users/jupenur/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/jupenur/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "reporter"
+            },
+            {
+              "user": {
+                "login": "nateprewitt",
+                "id": 5271761,
+                "node_id": "MDQ6VXNlcjUyNzE3NjE=",
+                "avatar_url": "https://avatars.githubusercontent.com/u/5271761?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/nateprewitt",
+                "html_url": "https://github.com/nateprewitt",
+                "followers_url": "https://api.github.com/users/nateprewitt/followers",
+                "following_url": "https://api.github.com/users/nateprewitt/following{/other_user}",
+                "gists_url": "https://api.github.com/users/nateprewitt/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/nateprewitt/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/nateprewitt/subscriptions",
+                "organizations_url": "https://api.github.com/users/nateprewitt/orgs",
+                "repos_url": "https://api.github.com/users/nateprewitt/repos",
+                "events_url": "https://api.github.com/users/nateprewitt/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/nateprewitt/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "remediation_developer"
+            },
+            {
+              "user": {
+                "login": "sigmavirus24",
+                "id": 240830,
+                "node_id": "MDQ6VXNlcjI0MDgzMA==",
+                "avatar_url": "https://avatars.githubusercontent.com/u/240830?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/sigmavirus24",
+                "html_url": "https://github.com/sigmavirus24",
+                "followers_url": "https://api.github.com/users/sigmavirus24/followers",
+                "following_url": "https://api.github.com/users/sigmavirus24/following{/other_user}",
+                "gists_url": "https://api.github.com/users/sigmavirus24/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/sigmavirus24/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/sigmavirus24/subscriptions",
+                "organizations_url": "https://api.github.com/users/sigmavirus24/orgs",
+                "repos_url": "https://api.github.com/users/sigmavirus24/repos",
+                "events_url": "https://api.github.com/users/sigmavirus24/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/sigmavirus24/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "remediation_reviewer"
+            },
+            {
+              "user": {
+                "login": "omerlevyk",
+                "id": 102253977,
+                "node_id": "U_kgDOBhhFmQ",
+                "avatar_url": "https://avatars.githubusercontent.com/u/102253977?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/omerlevyk",
+                "html_url": "https://github.com/omerlevyk",
+                "followers_url": "https://api.github.com/users/omerlevyk/followers",
+                "following_url": "https://api.github.com/users/omerlevyk/following{/other_user}",
+                "gists_url": "https://api.github.com/users/omerlevyk/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/omerlevyk/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/omerlevyk/subscriptions",
+                "organizations_url": "https://api.github.com/users/omerlevyk/orgs",
+                "repos_url": "https://api.github.com/users/omerlevyk/repos",
+                "events_url": "https://api.github.com/users/omerlevyk/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/omerlevyk/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "analyst"
+            }
+          ],
+          "comments": 7,
+          "cvss": {
+            "vector_string": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:N/A:N",
+            "score": 5.3
+          },
+          "epss": {
+            "percentage": 0.01022,
+            "percentile": 0.63605
+          }
+        },
+        {
+          "ghsa_id": "GHSA-9wx4-h78v-vm56",
+          "cve_id": "CVE-2024-35195",
+          "url": "https://api.github.com/advisories/GHSA-9wx4-h78v-vm56",
+          "html_url": "https://github.com/advisories/GHSA-9wx4-h78v-vm56",
+          "summary": "Requests `Session` object does not verify requests after making first request with verify=False",
+          "description": "When using a `requests.Session`, if the first request to a given origin is made with `verify=False`, TLS certificate verification may remain disabled for all subsequent requests to that origin, even if `verify=True` is explicitly specified later.\n\nThis occurs because the underlying connection is reused from the session's connection pool, causing the initial TLS verification setting to persist for the lifetime of the pooled connection. As a result, applications may unintentionally send requests without certificate verification, leading to potential man-in-the-middle attacks and compromised confidentiality or integrity.\n\nThis behavior affects versions of `requests` prior to 2.32.0.",
+          "type": "reviewed",
+          "severity": "medium",
+          "repository_advisory_url": "https://api.github.com/repos/psf/requests/security-advisories/GHSA-9wx4-h78v-vm56",
+          "source_code_location": "https://github.com/psf/requests",
+          "identifiers": [
+            {
+              "value": "GHSA-9wx4-h78v-vm56",
+              "type": "GHSA"
+            },
+            {
+              "value": "CVE-2024-35195",
+              "type": "CVE"
+            }
+          ],
+          "references": [
+            "https://github.com/psf/requests/security/advisories/GHSA-9wx4-h78v-vm56",
+            "https://github.com/psf/requests/pull/6655",
+            "https://github.com/psf/requests/commit/a58d7f2ffb4d00b46dca2d70a3932a0b37e22fac",
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-35195",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IYLSNK5TL46Q6XPRVMHVWS63MVJQOK4Q",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/N7WP6EYDSUOCOJYHDK5NX43PYZ4SNHGZ",
+            "https://github.com/advisories/GHSA-9wx4-h78v-vm56"
+          ],
+          "published_at": "2024-05-20T20:15:00Z",
+          "updated_at": "2026-01-16T00:02:51Z",
+          "github_reviewed_at": "2024-05-20T20:15:00Z",
+          "nvd_published_at": "2024-05-20T21:15:09Z",
+          "withdrawn_at": null,
+          "vulnerabilities": [
+            {
+              "package": {
+                "ecosystem": "pip",
+                "name": "requests"
+              },
+              "vulnerable_version_range": "< 2.32.0",
+              "first_patched_version": "2.32.0",
+              "vulnerable_functions": []
+            }
+          ],
+          "cvss_severities": {
+            "cvss_v3": {
+              "vector_string": "CVSS:3.1/AV:L/AC:H/PR:H/UI:R/S:U/C:H/I:H/A:N",
+              "score": 5.6
+            },
+            "cvss_v4": {
+              "vector_string": null,
+              "score": 0.0
+            }
+          },
+          "cwes": [
+            {
+              "cwe_id": "CWE-670",
+              "name": "Always-Incorrect Control Flow Implementation"
+            }
+          ],
+          "credits": [
+            {
+              "user": {
+                "login": "mikeassel",
+                "id": 16667708,
+                "node_id": "MDQ6VXNlcjE2NjY3NzA4",
+                "avatar_url": "https://avatars.githubusercontent.com/u/16667708?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/mikeassel",
+                "html_url": "https://github.com/mikeassel",
+                "followers_url": "https://api.github.com/users/mikeassel/followers",
+                "following_url": "https://api.github.com/users/mikeassel/following{/other_user}",
+                "gists_url": "https://api.github.com/users/mikeassel/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/mikeassel/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/mikeassel/subscriptions",
+                "organizations_url": "https://api.github.com/users/mikeassel/orgs",
+                "repos_url": "https://api.github.com/users/mikeassel/repos",
+                "events_url": "https://api.github.com/users/mikeassel/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/mikeassel/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "reporter"
+            },
+            {
+              "user": {
+                "login": "sigmavirus24",
+                "id": 240830,
+                "node_id": "MDQ6VXNlcjI0MDgzMA==",
+                "avatar_url": "https://avatars.githubusercontent.com/u/240830?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/sigmavirus24",
+                "html_url": "https://github.com/sigmavirus24",
+                "followers_url": "https://api.github.com/users/sigmavirus24/followers",
+                "following_url": "https://api.github.com/users/sigmavirus24/following{/other_user}",
+                "gists_url": "https://api.github.com/users/sigmavirus24/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/sigmavirus24/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/sigmavirus24/subscriptions",
+                "organizations_url": "https://api.github.com/users/sigmavirus24/orgs",
+                "repos_url": "https://api.github.com/users/sigmavirus24/repos",
+                "events_url": "https://api.github.com/users/sigmavirus24/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/sigmavirus24/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "remediation_developer"
+            },
+            {
+              "user": {
+                "login": "nateprewitt",
+                "id": 5271761,
+                "node_id": "MDQ6VXNlcjUyNzE3NjE=",
+                "avatar_url": "https://avatars.githubusercontent.com/u/5271761?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/nateprewitt",
+                "html_url": "https://github.com/nateprewitt",
+                "followers_url": "https://api.github.com/users/nateprewitt/followers",
+                "following_url": "https://api.github.com/users/nateprewitt/following{/other_user}",
+                "gists_url": "https://api.github.com/users/nateprewitt/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/nateprewitt/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/nateprewitt/subscriptions",
+                "organizations_url": "https://api.github.com/users/nateprewitt/orgs",
+                "repos_url": "https://api.github.com/users/nateprewitt/repos",
+                "events_url": "https://api.github.com/users/nateprewitt/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/nateprewitt/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "remediation_reviewer"
+            },
+            {
+              "user": {
+                "login": "liiiiiiaduarte34-art",
+                "id": 230308500,
+                "node_id": "U_kgDODbo6lA",
+                "avatar_url": "https://avatars.githubusercontent.com/u/230308500?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/liiiiiiaduarte34-art",
+                "html_url": "https://github.com/liiiiiiaduarte34-art",
+                "followers_url": "https://api.github.com/users/liiiiiiaduarte34-art/followers",
+                "following_url": "https://api.github.com/users/liiiiiiaduarte34-art/following{/other_user}",
+                "gists_url": "https://api.github.com/users/liiiiiiaduarte34-art/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/liiiiiiaduarte34-art/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/liiiiiiaduarte34-art/subscriptions",
+                "organizations_url": "https://api.github.com/users/liiiiiiaduarte34-art/orgs",
+                "repos_url": "https://api.github.com/users/liiiiiiaduarte34-art/repos",
+                "events_url": "https://api.github.com/users/liiiiiiaduarte34-art/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/liiiiiiaduarte34-art/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "analyst"
+            }
+          ],
+          "comments": 9,
+          "cvss": {
+            "vector_string": "CVSS:3.1/AV:L/AC:H/PR:H/UI:R/S:U/C:H/I:H/A:N",
+            "score": 5.6
+          },
+          "epss": {
+            "percentage": 0.0034,
+            "percentile": 0.27543
+          }
+        },
+        {
+          "ghsa_id": "GHSA-j8r2-6x86-q33q",
+          "cve_id": "CVE-2023-32681",
+          "url": "https://api.github.com/advisories/GHSA-j8r2-6x86-q33q",
+          "html_url": "https://github.com/advisories/GHSA-j8r2-6x86-q33q",
+          "summary": "Unintended leak of Proxy-Authorization header in requests",
+          "description": "### Impact\n\nSince Requests v2.3.0, Requests has been vulnerable to potentially leaking `Proxy-Authorization` headers to destination servers, specifically during redirects to an HTTPS origin. This is a product of how `rebuild_proxies` is used to recompute and [reattach the `Proxy-Authorization` header](https://github.com/psf/requests/blob/f2629e9e3c7ce3c3c8c025bcd8db551101cbc773/requests/sessions.py#L319-L328) to requests when redirected. Note this behavior has _only_ been observed to affect proxied requests when credentials are supplied in the URL user information component (e.g. `https://username:password@proxy:8080`).\n\n**Current vulnerable behavior(s):**\n\n1. HTTP → HTTPS: **leak**\n2. HTTPS → HTTP: **no leak**\n3. HTTPS → HTTPS: **leak**\n4. HTTP → HTTP: **no leak**\n\nFor HTTP connections sent through the proxy, the proxy will identify the header in the request itself and remove it prior to forwarding to the destination server. However when sent over HTTPS, the `Proxy-Authorization` header must be sent in the CONNECT request as the proxy has no visibility into further tunneled requests. This results in Requests forwarding the header to the destination server unintentionally, allowing a malicious actor to potentially exfiltrate those credentials.\n\nThe reason this currently works for HTTPS connections in Requests is the `Proxy-Authorization` header is also handled by urllib3 with our usage of the ProxyManager in adapters.py with [`proxy_manager_for`](https://github.com/psf/requests/blob/f2629e9e3c7ce3c3c8c025bcd8db551101cbc773/requests/adapters.py#L199-L235). This will compute the required proxy headers in `proxy_headers` and pass them to the Proxy Manager, avoiding attaching them directly to the Request object. This will be our preferred option going forward for default usage.\n\n### Patches\nStarting in Requests v2.31.0, Requests will no longer attach this header to redirects with an HTTPS destination. This should have no negative impacts on the default behavior of the library as the proxy credentials are already properly being handled by urllib3's ProxyManager.\n\nFor users with custom adapters, this _may_ be potentially breaking if you were already working around this behavior. The previous functionality of `rebuild_proxies` doesn't make sense in any case, so we would encourage any users impacted to migrate any handling of Proxy-Authorization directly into their custom adapter.\n\n### Workarounds\nFor users who are not able to update Requests immediately, there is one potential workaround.\n\nYou may disable redirects by setting `allow_redirects` to `False` on all calls through Requests top-level APIs. Note that if you're currently relying on redirect behaviors, you will need to capture the 3xx response codes and ensure a new request is made to the redirect destination.\n```\nimport requests\nr = requests.get('http://github.com/', allow_redirects=False)\n```\n\n### Credits\n\nThis vulnerability was discovered and disclosed by the following individuals.\n\nDennis Brinkrolf, Haxolot (https://haxolot.com/)\nTobias Funke, (tobiasfunke93@gmail.com)",
+          "type": "reviewed",
+          "severity": "medium",
+          "repository_advisory_url": "https://api.github.com/repos/psf/requests/security-advisories/GHSA-j8r2-6x86-q33q",
+          "source_code_location": "https://github.com/psf/requests",
+          "identifiers": [
+            {
+              "value": "GHSA-j8r2-6x86-q33q",
+              "type": "GHSA"
+            },
+            {
+              "value": "CVE-2023-32681",
+              "type": "CVE"
+            }
+          ],
+          "references": [
+            "https://github.com/psf/requests/security/advisories/GHSA-j8r2-6x86-q33q",
+            "https://github.com/psf/requests/commit/74ea7cf7a6a27a4eeb2ae24e162bcc942a6706d5",
+            "https://nvd.nist.gov/vuln/detail/CVE-2023-32681",
+            "https://github.com/psf/requests/releases/tag/v2.31.0",
+            "https://github.com/pypa/advisory-database/tree/main/vulns/requests/PYSEC-2023-74.yaml",
+            "https://lists.debian.org/debian-lts-announce/2023/06/msg00018.html",
+            "https://security.gentoo.org/glsa/202309-08",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/AW7HNFGYP44RT3DUDQXG2QT3OEV2PJ7Y",
+            "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KOYASTZDGQG2BWLSNBPL3TQRL2G7QYNZ",
+            "https://github.com/advisories/GHSA-j8r2-6x86-q33q"
+          ],
+          "published_at": "2023-05-22T20:36:32Z",
+          "updated_at": "2024-03-27T20:09:55Z",
+          "github_reviewed_at": "2023-05-22T20:36:32Z",
+          "nvd_published_at": "2023-05-26T18:15:14Z",
+          "withdrawn_at": null,
+          "vulnerabilities": [
+            {
+              "package": {
+                "ecosystem": "pip",
+                "name": "requests"
+              },
+              "vulnerable_version_range": ">= 2.3.0, < 2.31.0",
+              "first_patched_version": "2.31.0",
+              "vulnerable_functions": []
+            }
+          ],
+          "cvss_severities": {
+            "cvss_v3": {
+              "vector_string": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:N/A:N",
+              "score": 6.1
+            },
+            "cvss_v4": {
+              "vector_string": null,
+              "score": 0.0
+            }
+          },
+          "cwes": [
+            {
+              "cwe_id": "CWE-200",
+              "name": "Exposure of Sensitive Information to an Unauthorized Actor"
+            }
+          ],
+          "credits": [
+            {
+              "user": {
+                "login": "SmashITs",
+                "id": 31624228,
+                "node_id": "MDQ6VXNlcjMxNjI0MjI4",
+                "avatar_url": "https://avatars.githubusercontent.com/u/31624228?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/SmashITs",
+                "html_url": "https://github.com/SmashITs",
+                "followers_url": "https://api.github.com/users/SmashITs/followers",
+                "following_url": "https://api.github.com/users/SmashITs/following{/other_user}",
+                "gists_url": "https://api.github.com/users/SmashITs/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/SmashITs/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/SmashITs/subscriptions",
+                "organizations_url": "https://api.github.com/users/SmashITs/orgs",
+                "repos_url": "https://api.github.com/users/SmashITs/repos",
+                "events_url": "https://api.github.com/users/SmashITs/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/SmashITs/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "reporter"
+            },
+            {
+              "user": {
+                "login": "tobiasfunke1",
+                "id": 52739350,
+                "node_id": "MDQ6VXNlcjUyNzM5MzUw",
+                "avatar_url": "https://avatars.githubusercontent.com/u/52739350?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/tobiasfunke1",
+                "html_url": "https://github.com/tobiasfunke1",
+                "followers_url": "https://api.github.com/users/tobiasfunke1/followers",
+                "following_url": "https://api.github.com/users/tobiasfunke1/following{/other_user}",
+                "gists_url": "https://api.github.com/users/tobiasfunke1/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/tobiasfunke1/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/tobiasfunke1/subscriptions",
+                "organizations_url": "https://api.github.com/users/tobiasfunke1/orgs",
+                "repos_url": "https://api.github.com/users/tobiasfunke1/repos",
+                "events_url": "https://api.github.com/users/tobiasfunke1/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/tobiasfunke1/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "reporter"
+            },
+            {
+              "user": {
+                "login": "sethmlarson",
+                "id": 18519037,
+                "node_id": "MDQ6VXNlcjE4NTE5MDM3",
+                "avatar_url": "https://avatars.githubusercontent.com/u/18519037?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/sethmlarson",
+                "html_url": "https://github.com/sethmlarson",
+                "followers_url": "https://api.github.com/users/sethmlarson/followers",
+                "following_url": "https://api.github.com/users/sethmlarson/following{/other_user}",
+                "gists_url": "https://api.github.com/users/sethmlarson/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/sethmlarson/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/sethmlarson/subscriptions",
+                "organizations_url": "https://api.github.com/users/sethmlarson/orgs",
+                "repos_url": "https://api.github.com/users/sethmlarson/repos",
+                "events_url": "https://api.github.com/users/sethmlarson/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/sethmlarson/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "remediation_reviewer"
+            },
+            {
+              "user": {
+                "login": "nateprewitt",
+                "id": 5271761,
+                "node_id": "MDQ6VXNlcjUyNzE3NjE=",
+                "avatar_url": "https://avatars.githubusercontent.com/u/5271761?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/nateprewitt",
+                "html_url": "https://github.com/nateprewitt",
+                "followers_url": "https://api.github.com/users/nateprewitt/followers",
+                "following_url": "https://api.github.com/users/nateprewitt/following{/other_user}",
+                "gists_url": "https://api.github.com/users/nateprewitt/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/nateprewitt/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/nateprewitt/subscriptions",
+                "organizations_url": "https://api.github.com/users/nateprewitt/orgs",
+                "repos_url": "https://api.github.com/users/nateprewitt/repos",
+                "events_url": "https://api.github.com/users/nateprewitt/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/nateprewitt/received_events",
+                "type": "User",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "type": "remediation_developer"
+            }
+          ],
+          "comments": 1,
+          "cvss": {
+            "vector_string": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:N/A:N",
+            "score": 6.1
+          },
+          "epss": {
+            "percentage": 0.02974,
+            "percentile": 0.8652
+          }
+        }
+      ],
+      "delayMs": 0
+    }
+  },
+  {
+    "name": "advisories affecting pandas 1.0.3 (none)",
+    "recordedAt": "2026-11-15T17:14:52Z",
+    "method": "GET",
+    "url": "https://api.github.com/advisories?ecosystem=pip&affects=pandas%401.0.3&per_page=100",
+    "respondWith": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": [],
+      "delayMs": 0
+    }
+  }
+]

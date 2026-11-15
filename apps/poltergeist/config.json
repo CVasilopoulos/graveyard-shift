@@ -1,0 +1,13 @@
+{
+  "targets": [
+    {
+      "owner": "CVasilopoulos",
+      "repo": "graveyard-shift",
+      "ref": "main",
+      "lockfiles": [
+        "apps/poltergeist/demo/haunted-house/package-lock.json",
+        "apps/poltergeist/demo/haunted-house/requirements.txt"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+[
+  {
+    "name": "vulns for an id OSV does not know",
+    "recordedAt": "2026-11-15T17:16:41Z",
+    "method": "GET",
+    "url": "https://api.osv.dev/v1/vulns/GHSA-0000-0000-0000",
+    "respondWith": {
+      "status": 404,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "code": 5,
+        "message": "Vulnerability not found"
+      },
+      "delayMs": 0
+    }
+  }
+]
