@@ -132,24 +132,24 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Export the theme (typed as `AppDefinition["theme"]`, which gains `issuePrefix` in task 11) with `name: "Poltergeist"`, `tagline: "Something is rattling in your lockfile"`, `accentColor: "#8b5cf6"`, `labels: { confirmed: "haunting", ghost: "ghost", resolved: "laid to rest" }`, `issuePrefix: "👻"`
     - _Requirements: 14.1, 14.2, 11.2_
 
-- [ ] 9. Implement index.ts
-  - [ ] 9.1 Write `apps/poltergeist/src/index.ts`
+- [x] 9. Implement index.ts
+  - [x] 9.1 Write `apps/poltergeist/src/index.ts`
     - Import `osv` and `github` source functions (names used for error reporting)
     - Import `rules` function
     - Import config schema and theme
-    - Export `AppDefinition` with `sources: [osv, github]`, `rules`, `configSchema`, `theme`
+    - Export `AppDefinition` with `sources: [osv, github]`, `rules`, `configSchema`, `theme`, as the default export too (the CLI imports the default export)
     - _Requirements: 15.1, 15.2_
 
-- [ ] 10. Create demo lockfiles and README
-  - [ ] 10.1 Create `apps/poltergeist/demo/haunted-house/package-lock.json`
+- [x] 10. Create demo lockfiles and README
+  - [x] 10.1 Create `apps/poltergeist/demo/haunted-house/package-lock.json`
     - Pin `express@4.17.1` and `lodash@4.17.15` with known advisories
-    - Include at least three packages to produce hauntings
+    - Include at least three packages to produce hauntings (minimist 1.2.5 is the third; top-level packages only, so a run stays far below 60 GitHub requests per hour)
     - _Requirements: 12.1_
-  - [ ] 10.2 Create `apps/poltergeist/demo/haunted-house/requirements.txt`
+  - [x] 10.2 Create `apps/poltergeist/demo/haunted-house/requirements.txt`
     - Pin `requests==2.25.0` with known advisory
-    - Include at least one package to produce a ghost
+    - Include at least one package to produce a ghost (pandas 1.0.3: PYSEC-2020-73 is in OSV only)
     - _Requirements: 12.1_
-  - [ ] 10.3 Write `apps/poltergeist/demo/README.md`
+  - [x] 10.3 Write `apps/poltergeist/demo/README.md`
     - List advisory IDs for hauntings and ghosts (checked against live APIs)
     - Include URLs and affected/fixed versions
     - _Requirements: 12.2_
@@ -173,9 +173,10 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Added in review: the CLI imported `<appDir>/index.js`, which a TypeScript app built to `dist/` does not have, so task 12 could not run
     - _Requirements: 1.1, 15.2_
 
-- [ ] 12. Final checkpoint — full test suite and dry run
+- [x] 12. Final checkpoint — full test suite and dry run
   - Run `npm test` in `apps/poltergeist/` and verify all tests pass offline
   - Run `npm run build` to ensure `tsc` compiles with no errors
   - Run `npx graveyard-shift run apps/poltergeist --dry-run` from the repo root
+    - Until the repository is public, raw.githubusercontent.com answers 404 for the demo lockfiles and every source fails (requirement 2.3), so the 2026-11-15 dry run served the two lockfiles from the working tree through a fetch shim preloaded with NODE_OPTIONS; OSV and GitHub were queried live: 12 hauntings, 1 ghost
   - Verify demo produces hauntings and ghosts as documented in `demo/README.md`
   - _Requirements: 12.1, 12.2, 13.1, 13.2, 13.3, 13.4, 15.1, 15.2, 15.3, 15.4_
