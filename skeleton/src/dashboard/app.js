@@ -1,371 +1,309 @@
-// Compute base path for GitHub Pages subpath compatibility
-const base = new URL('.', document.baseURI).href;
+export const STATUSES = ['confirmed', 'ghost', 'resolved'];
+export const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
+export const DEFAULT_LABELS = { confirmed: 'confirmed', ghost: 'ghost', resolved: 'resolved' };
 
-// State
-let allFindings = [];
-let currentFilter = 'all';
+const STATUS_ICONS = { confirmed: '◆', ghost: '◇', resolved: '✓' };
 
-// DOM elements
-const filterInputs = document.querySelectorAll('input[name="status-filter"]');
-const findingsList = document.getElementById('findings-list');
-const countTotal = document.getElementById('count-total');
-const countConfirmed = document.getElementById('count-confirmed');
-const countGhost = document.getElementById('count-ghost');
-const countResolved = document.getElementById('count-resolved');
-const lastRunInfo = document.getElementById('last-run-info');
+export function statusOf(finding) {
+  if (finding.resolvedAt) return 'resolved';
+  return finding.status === 'confirmed' ? 'confirmed' : 'ghost';
+}
 
-/**
- * Load JSON from a relative URL.
- * @param {string} name - The file name (e.g., 'findings.json')
- * @returns {Promise<any>}
- */
-async function loadJson(name) {
-  const url = new URL(name, base).href;
-  const response = await fetch(url);
+export function severityOf(finding) {
+  return SEVERITIES.includes(finding.severity) ? finding.severity : 'info';
+}
+
+export function labelsFor(theme) {
+  const labels = { ...DEFAULT_LABELS };
+  for (const status of STATUSES) {
+    const label = theme?.labels?.[status];
+    if (typeof label === 'string' && label.trim() !== '') labels[status] = label.trim();
+  }
+  return labels;
+}
+
+export function capitalise(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+export function countFindings(findings) {
+  const counts = { total: findings.length, confirmed: 0, ghost: 0, resolved: 0 };
+  for (const finding of findings) counts[statusOf(finding)] += 1;
+  return counts;
+}
+
+export function filterFindings(findings, filter) {
+  if (!STATUSES.includes(filter)) return [...findings];
+  return findings.filter((finding) => statusOf(finding) === filter);
+}
+
+function compareText(a, b) {
+  const left = String(a);
+  const right = String(b);
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+export function sortFindings(findings) {
+  return [...findings].sort(
+    (a, b) =>
+      STATUSES.indexOf(statusOf(a)) - STATUSES.indexOf(statusOf(b)) ||
+      SEVERITIES.indexOf(severityOf(a)) - SEVERITIES.indexOf(severityOf(b)) ||
+      compareText(a.title, b.title) ||
+      compareText(a.id, b.id),
+  );
+}
+
+export function safeUrl(value) {
+  if (typeof value !== 'string') return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+export function dateOf(timestamp) {
+  return typeof timestamp === 'string' && /^\d{4}-\d{2}-\d{2}/.test(timestamp) ? timestamp.slice(0, 10) : '';
+}
+
+export function lastRunOf(runs) {
+  return Array.isArray(runs) && runs.length > 0 ? runs[runs.length - 1] : null;
+}
+
+export function loadErrorMessage(name, failure) {
+  if (typeof failure.status === 'number') {
+    const statusText = failure.statusText ? ` ${failure.statusText}` : '';
+    return `Could not load ${name}: HTTP ${failure.status}${statusText}`;
+  }
+  return `Could not load ${name}: network failure (${failure.message || 'no response'})`;
+}
+
+export function runTally(run, labels) {
+  return [
+    `${labels.confirmed}: ${Number(run.confirmedCount) || 0}`,
+    `${labels.ghost}: ${Number(run.ghostCount) || 0}`,
+    `${labels.resolved}: ${Number(run.resolvedCount) || 0}`,
+  ].join(' · ');
+}
+
+export function sourcesSentence(count) {
+  return count === 1 ? 'Reported by 1 source' : `Reported by ${count} sources`;
+}
+
+async function loadJson(name, base) {
+  let response;
+  try {
+    response = await fetch(new URL(name, base));
+  } catch (error) {
+    throw new Error(loadErrorMessage(name, { message: error instanceof Error ? error.message : String(error) }));
+  }
   if (!response.ok) {
-    const error = new Error(response.statusText);
-    error.status = response.status;
-    throw error;
+    throw new Error(loadErrorMessage(name, { status: response.status, statusText: response.statusText }));
   }
   return response.json();
 }
 
-/**
- * Fetch theme.json with fallback to defaults.
- * @returns {Promise<Object>}
- */
-async function loadTheme() {
-  try {
-    return await loadJson('theme.json');
-  } catch {
-    // theme.json is optional; return empty object for fallback
-    return {};
-  }
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
 }
 
-/**
- * Apply theme to CSS custom properties.
- * @param {Object} theme - Theme object with optional name, tagline, accentColor, labels
- */
-function applyTheme(theme) {
-  const root = document.documentElement;
+function timeElement(timestamp, text) {
+  const time = element('time', '', text);
+  time.dateTime = timestamp;
+  return time;
+}
 
-  if (theme.accentColor) {
-    root.style.setProperty('--accent-color', theme.accentColor);
+function applyTheme(theme, labels) {
+  if (typeof theme.accentColor === 'string' && CSS.supports('color', theme.accentColor)) {
+    document.documentElement.style.setProperty('--accent-color', theme.accentColor);
   }
-
-  if (theme.labels?.confirmed) {
-    root.style.setProperty('--label-confirmed', theme.labels.confirmed);
-  }
-  if (theme.labels?.ghost) {
-    root.style.setProperty('--label-ghost', theme.labels.ghost);
-  }
-  if (theme.labels?.resolved) {
-    root.style.setProperty('--label-resolved', theme.labels.resolved);
-  }
-
-  // Optional: update page title if theme name is provided
-  if (theme.name) {
+  if (typeof theme.name === 'string' && theme.name) {
     document.title = theme.name;
-    const header = document.querySelector('header h1');
-    if (header) {
-      header.textContent = theme.name;
-    }
+    document.getElementById('app-name').textContent = theme.name;
   }
-
-  // Optional: display tagline if provided
-  if (theme.tagline) {
-    const header = document.querySelector('header');
-    if (header) {
-      const tagline = document.createElement('p');
-      tagline.className = 'tagline';
-      tagline.textContent = theme.tagline;
-      header.appendChild(tagline);
-    }
+  const tagline = document.getElementById('app-tagline');
+  if (typeof theme.tagline === 'string' && theme.tagline) {
+    tagline.textContent = theme.tagline;
+    tagline.hidden = false;
+  }
+  for (const node of document.querySelectorAll('[data-label]')) {
+    node.textContent = capitalise(labels[node.dataset.label]);
   }
 }
 
-/**
- * Compute aggregate counts from all findings.
- * @returns {Object}
- */
-function computeCounts() {
-  const counts = {
-    total: 0,
-    confirmed: 0,
-    ghost: 0,
-    resolved: 0,
-  };
-
-  for (const finding of allFindings) {
-    counts.total += 1;
-    if (finding.resolvedAt) {
-      counts.resolved += 1;
-    } else if (finding.status === 'confirmed') {
-      counts.confirmed += 1;
-    } else if (finding.status === 'ghost') {
-      counts.ghost += 1;
-    }
+function renderCounts(findings) {
+  const counts = countFindings(findings);
+  for (const key of Object.keys(counts)) {
+    document.getElementById(`count-${key}`).textContent = String(counts[key]);
   }
-
-  return counts;
 }
 
-/**
- * Update the counts display.
- */
-function updateCounts() {
-  const counts = computeCounts();
-  countTotal.textContent = counts.total;
-  countConfirmed.textContent = counts.confirmed;
-  countGhost.textContent = counts.ghost;
-  countResolved.textContent = counts.resolved;
+function renderLastRun(result, labels) {
+  const container = document.getElementById('last-run-info');
+  container.replaceChildren();
+  if (result.status === 'rejected') {
+    container.append(element('p', 'run-error', result.reason.message));
+    return;
+  }
+  const run = lastRunOf(result.value);
+  if (!run) {
+    container.append(element('p', '', 'No runs recorded yet.'));
+    return;
+  }
+  const when = element('p', 'last-run-timestamp');
+  when.append(element('strong', '', 'Last run '), timeElement(run.runAt, run.runAt));
+  container.append(when);
+  container.append(element('p', 'last-run-tally', runTally(run, labels)));
+  if (Array.isArray(run.errorSources) && run.errorSources.length > 0) {
+    container.append(
+      element('p', 'run-error', `Sources that failed in this run: ${run.errorSources.join(', ')}. Their previous evidence was kept.`),
+    );
+  }
 }
 
-/**
- * Filter findings based on current filter.
- * @returns {Array}
- */
-function getFilteredFindings() {
-  if (currentFilter === 'all') {
-    return allFindings;
-  }
-
-  return allFindings.filter(finding => {
-    if (currentFilter === 'resolved') {
-      return finding.resolvedAt !== undefined;
-    } else if (currentFilter === 'confirmed') {
-      return finding.status === 'confirmed' && !finding.resolvedAt;
-    } else if (currentFilter === 'ghost') {
-      return finding.status === 'ghost' && !finding.resolvedAt;
+function renderEvidence(finding) {
+  const section = element('div', 'finding-sources');
+  const sources = Array.isArray(finding.sources) ? finding.sources : [];
+  section.append(element('p', 'sources-label', sourcesSentence(sources.length)));
+  const list = element('ul', 'source-list');
+  for (const source of sources) {
+    const evidence = (finding.evidence ?? []).find((entry) => entry.sourceName === source);
+    const item = element('li');
+    item.append(element('span', 'source-name', source));
+    if (evidence?.text) item.append(element('span', 'evidence-text', evidence.text));
+    const link = safeUrl(evidence?.link);
+    if (link) {
+      const anchor = element('a', 'evidence-link', 'evidence');
+      anchor.href = link;
+      anchor.rel = 'noopener noreferrer';
+      item.append(anchor);
     }
-    return true;
-  });
+    if (evidence?.staleError) {
+      item.append(element('span', 'stale-note', `Carried over from the previous run: ${evidence.staleError}`));
+    }
+    list.append(item);
+  }
+  section.append(list);
+  return section;
 }
 
-/**
- * Render a single finding card.
- * @param {Object} finding - Finding object
- * @returns {HTMLElement}
- */
-function createFindingElement(finding) {
-  const article = document.createElement('article');
-  
-  // Determine effective status for styling: confirmed/ghost or resolved
-  const effectiveStatus = finding.resolvedAt ? 'resolved' : finding.status;
-  article.className = `finding ${effectiveStatus}`;
+function renderFinding(finding, labels) {
+  const status = statusOf(finding);
+  const severity = severityOf(finding);
+  const article = element('article', 'finding');
+  article.dataset.status = status;
 
-  // Build HTML content
-  const header = document.createElement('div');
-  header.className = 'finding-header';
+  const header = element('div', 'finding-header');
+  header.append(element('h3', 'finding-title', finding.title));
+  const badges = element('div', 'finding-badges');
+  const statusBadge = element('span', 'badge status-badge');
+  statusBadge.dataset.status = status;
+  const icon = element('span', 'status-icon', STATUS_ICONS[status]);
+  icon.setAttribute('aria-hidden', 'true');
+  statusBadge.append(icon, document.createTextNode(labels[status]));
+  const severityBadge = element('span', 'badge severity-badge', finding.severity ?? 'info');
+  severityBadge.dataset.severity = severity;
+  badges.append(statusBadge, severityBadge);
+  header.append(badges);
+  article.append(header);
 
-  const title = document.createElement('h3');
-  title.className = 'finding-title';
-  title.textContent = finding.title;
+  if (finding.summary) article.append(element('p', 'finding-summary', finding.summary));
 
-  const badges = document.createElement('div');
-  badges.className = 'finding-badges';
-
-  // Status badge with custom label
-  const statusBadge = document.createElement('span');
-  statusBadge.className = `badge status ${effectiveStatus}`;
-  if (finding.resolvedAt) {
-    statusBadge.textContent = 'Laid to Rest';
-  } else if (finding.status === 'confirmed') {
-    statusBadge.textContent = 'Haunted';
-  } else {
-    statusBadge.textContent = 'Ghost';
-  }
-  badges.appendChild(statusBadge);
-
-  // Severity badge
-  const severityBadge = document.createElement('span');
-  severityBadge.className = `badge severity ${finding.severity}`;
-  severityBadge.textContent = finding.severity.toUpperCase();
-  badges.appendChild(severityBadge);
-
-  header.appendChild(title);
-  header.appendChild(badges);
-
-  const summary = document.createElement('p');
-  summary.className = 'finding-summary';
-  summary.textContent = finding.summary;
-
-  const sourceSection = document.createElement('div');
-  sourceSection.className = 'finding-sources';
-  const sourcesLabel = document.createElement('span');
-  sourcesLabel.className = 'sources-label';
-  sourcesLabel.textContent = 'Sources';
-  
-  const ul = document.createElement('ul');
-  ul.className = 'source-list';
-  
-  for (const source of finding.sources) {
-    const li = document.createElement('li');
-    li.textContent = source;
-    ul.appendChild(li);
-  }
-  
-  sourceSection.appendChild(sourcesLabel);
-  sourceSection.appendChild(ul);
-
-  article.appendChild(header);
-  article.appendChild(summary);
-  article.appendChild(sourceSection);
-
-  // Optional: add URL link
-  if (finding.url) {
-    const link = document.createElement('a');
-    link.href = finding.url;
-    link.textContent = 'More information';
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    article.appendChild(link);
-  }
-
-  // Optional: add fix information
-  if (finding.fix) {
-    const fixDiv = document.createElement('div');
-    fixDiv.className = 'finding-fix';
-    
-    const fixLabel = document.createElement('strong');
-    fixLabel.textContent = 'Fix: ';
-    fixDiv.appendChild(fixLabel);
-    
-    const fixText = document.createElement('span');
-    fixText.textContent = finding.fix.text;
-    if (finding.fix.value) {
-      fixText.textContent += ` (${finding.fix.value})`;
+  if (finding.fix?.text || finding.fix?.value) {
+    const fix = element('p', 'finding-fix');
+    fix.append(element('strong', '', 'Fix '));
+    if (finding.fix.text) fix.append(document.createTextNode(finding.fix.text));
+    if (finding.fix.value && !String(finding.fix.text ?? '').includes(finding.fix.value)) {
+      fix.append(document.createTextNode(' '), element('code', '', finding.fix.value));
     }
-    fixDiv.appendChild(fixText);
-    
-    article.appendChild(fixDiv);
+    article.append(fix);
   }
 
-  // Show stale indicator if applicable
+  article.append(renderEvidence(finding));
+
   if (finding.stale) {
-    const staleIndicator = document.createElement('div');
-    staleIndicator.className = 'stale-indicator';
-    staleIndicator.textContent = '⚠ Data may be stale';
-    article.appendChild(staleIndicator);
+    article.append(element('p', 'stale-indicator', 'Some evidence is from an earlier run because a source failed this time.'));
   }
+
+  const meta = element('p', 'finding-meta');
+  const parts = [];
+  if (dateOf(finding.firstSeen)) parts.push(['First seen ', finding.firstSeen]);
+  if (dateOf(finding.lastSeen)) parts.push(['last seen ', finding.lastSeen]);
+  if (dateOf(finding.resolvedAt)) parts.push([`${capitalise(labels.resolved)} `, finding.resolvedAt]);
+  parts.forEach(([text, timestamp], index) => {
+    if (index > 0) meta.append(document.createTextNode(' · '));
+    meta.append(document.createTextNode(text), timeElement(timestamp, dateOf(timestamp)));
+  });
+  const link = safeUrl(finding.url);
+  if (link) {
+    if (parts.length > 0) meta.append(document.createTextNode(' · '));
+    const anchor = element('a', 'finding-url', `Details on ${new URL(link).hostname}`);
+    anchor.href = link;
+    anchor.rel = 'noopener noreferrer';
+    meta.append(anchor);
+  }
+  if (meta.childNodes.length > 0) article.append(meta);
 
   return article;
 }
 
-/**
- * Render the findings list based on current filter.
- */
-function renderFindings() {
-  const filtered = getFilteredFindings();
-  findingsList.innerHTML = '';
-
-  if (filtered.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.innerHTML = '<p>No findings in this category.</p>';
-    findingsList.appendChild(empty);
+function renderFindings(findings, filter, labels) {
+  const list = document.getElementById('findings-list');
+  list.replaceChildren();
+  if (findings.length === 0) {
+    list.append(element('p', 'empty-state', 'No findings are currently recorded.'));
     return;
   }
-
-  for (const finding of filtered) {
-    findingsList.appendChild(createFindingElement(finding));
-  }
-}
-
-/**
- * Update last run information.
- * @param {Array} runs - Array of RunRecord objects
- */
-function updateLastRunInfo(runs) {
-  lastRunInfo.innerHTML = '';
-
-  if (!runs || runs.length === 0) {
-    const noRuns = document.createElement('p');
-    noRuns.textContent = 'No runs recorded';
-    lastRunInfo.appendChild(noRuns);
+  const shown = sortFindings(filterFindings(findings, filter));
+  if (shown.length === 0) {
+    list.append(element('p', 'empty-state', `No findings with status ${labels[filter]}.`));
     return;
   }
-
-  const lastRun = runs[runs.length - 1];
-
-  const timestamp = document.createElement('p');
-  timestamp.className = 'last-run-timestamp';
-  const date = new Date(lastRun.runAt);
-  timestamp.innerHTML = `<strong>Last run:</strong> ${date.toLocaleString()}`;
-  lastRunInfo.appendChild(timestamp);
-
-  if (lastRun.errorSources && lastRun.errorSources.length > 0) {
-    const errors = document.createElement('p');
-    errors.className = 'error-sources';
-    errors.innerHTML = `<strong>Errors from:</strong> ${lastRun.errorSources.join(', ')}`;
-    lastRunInfo.appendChild(errors);
-  }
+  for (const finding of shown) list.append(renderFinding(finding, labels));
 }
 
-/**
- * Show error banner.
- * @param {Error} error - Error object
- */
-function showError(error) {
-  findingsList.innerHTML = '';
-  const errorBanner = document.createElement('div');
-  errorBanner.className = 'error-banner';
-
-  let message = 'Failed to load findings';
-  if (error.status) {
-    message = `Failed to load findings (HTTP ${error.status})`;
-  } else if (error.message) {
-    message = `Failed to load findings: ${error.message}`;
-  }
-
-  errorBanner.innerHTML = `<strong>Error:</strong> ${message}`;
-  findingsList.appendChild(errorBanner);
+function showError(message) {
+  const list = document.getElementById('findings-list');
+  list.replaceChildren(element('p', 'error-banner', message));
+  list.firstChild.setAttribute('role', 'alert');
 }
 
-/**
- * Initialize the dashboard.
- */
 async function init() {
-  try {
-    // Load findings and runs
-    allFindings = await loadJson('findings.json');
+  const base = new URL('.', document.baseURI);
+  const [themeResult, findingsResult, runsResult] = await Promise.allSettled([
+    loadJson('theme.json', base),
+    loadJson('findings.json', base),
+    loadJson('runs.json', base),
+  ]);
+  const theme = themeResult.status === 'fulfilled' && themeResult.value && typeof themeResult.value === 'object' ? themeResult.value : {};
+  const labels = labelsFor(theme);
+  applyTheme(theme, labels);
+  renderLastRun(runsResult, labels);
 
-    // Load optional theme
-    const theme = await loadTheme();
-    applyTheme(theme);
-
-    // Update counts
-    updateCounts();
-
-    // Render initial findings
-    renderFindings();
-
-    // Load and display last run info
-    try {
-      const runs = await loadJson('runs.json');
-      updateLastRunInfo(runs);
-    } catch {
-      // runs.json may not exist; this is not a fatal error
-      updateLastRunInfo([]);
-    }
-
-    // Attach filter change listeners
-    filterInputs.forEach(input => {
-      input.addEventListener('change', event => {
-        currentFilter = event.target.value;
-        renderFindings();
-      });
+  if (findingsResult.status === 'rejected') {
+    showError(findingsResult.reason.message);
+    return;
+  }
+  if (!Array.isArray(findingsResult.value)) {
+    showError('Could not load findings.json: the file is not a JSON array.');
+    return;
+  }
+  const findings = findingsResult.value;
+  renderCounts(findings);
+  let filter = 'all';
+  renderFindings(findings, filter, labels);
+  for (const input of document.querySelectorAll('input[name="status-filter"]')) {
+    input.addEventListener('change', (event) => {
+      filter = event.target.value;
+      renderFindings(findings, filter, labels);
     });
-  } catch (error) {
-    console.error('Dashboard initialization error:', error);
-    showError(error);
   }
 }
 
-// Start initialization when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
+if (typeof document !== 'undefined') {
+  init().catch((error) => showError(`The dashboard failed to start: ${error instanceof Error ? error.message : String(error)}`));
 }

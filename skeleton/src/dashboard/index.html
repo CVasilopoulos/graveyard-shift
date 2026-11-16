@@ -3,65 +3,57 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Findings confirmed only when two independent sources agree.">
   <title>Graveyard Shift</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Graveyard Shift</h1>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <h1 id="app-name">Graveyard Shift</h1>
+      <p id="app-tagline" class="tagline" hidden></p>
+    </div>
   </header>
 
   <main>
-    <section id="filter-section">
-      <fieldset>
-        <legend>Filter findings</legend>
-        <label>
-          <input type="radio" name="status-filter" value="all" checked>
-          All
-        </label>
-        <label>
-          <input type="radio" name="status-filter" value="confirmed">
-          Confirmed
-        </label>
-        <label>
-          <input type="radio" name="status-filter" value="ghost">
-          Ghost
-        </label>
-        <label>
-          <input type="radio" name="status-filter" value="resolved">
-          Resolved
-        </label>
-      </fieldset>
-    </section>
-
-    <section id="counts-section">
+    <section id="summary-section" aria-labelledby="summary-heading">
+      <h2 id="summary-heading" class="visually-hidden">Summary</h2>
       <div class="counts">
         <div class="count-item">
           <span class="count-label">Total</span>
-          <span class="count-value" id="count-total">0</span>
+          <span class="count-value" id="count-total">–</span>
         </div>
-        <div class="count-item">
-          <span class="count-label">Confirmed</span>
-          <span class="count-value" id="count-confirmed">0</span>
+        <div class="count-item" data-status="confirmed">
+          <span class="count-label" data-label="confirmed">Confirmed</span>
+          <span class="count-value" id="count-confirmed">–</span>
         </div>
-        <div class="count-item">
-          <span class="count-label">Ghost</span>
-          <span class="count-value" id="count-ghost">0</span>
+        <div class="count-item" data-status="ghost">
+          <span class="count-label" data-label="ghost">Ghost</span>
+          <span class="count-value" id="count-ghost">–</span>
         </div>
-        <div class="count-item">
-          <span class="count-label">Resolved</span>
-          <span class="count-value" id="count-resolved">0</span>
+        <div class="count-item" data-status="resolved">
+          <span class="count-label" data-label="resolved">Resolved</span>
+          <span class="count-value" id="count-resolved">–</span>
         </div>
       </div>
+      <div id="last-run-info" class="last-run" aria-live="polite"></div>
+      <p class="rule-note">A finding is confirmed only when two independent sources report it. A finding only one source reports is shown here but never raises an alert.</p>
     </section>
 
-    <section id="findings-section">
-      <div id="findings-list" role="region" aria-label="Findings">
+    <section id="findings-section" aria-labelledby="findings-heading">
+      <div class="findings-toolbar">
+        <h2 id="findings-heading">Findings</h2>
+        <fieldset class="filter">
+          <legend>Show</legend>
+          <label><input type="radio" name="status-filter" value="all" checked> <span>All</span></label>
+          <label><input type="radio" name="status-filter" value="confirmed"> <span data-label="confirmed">Confirmed</span></label>
+          <label><input type="radio" name="status-filter" value="ghost"> <span data-label="ghost">Ghost</span></label>
+          <label><input type="radio" name="status-filter" value="resolved"> <span data-label="resolved">Resolved</span></label>
+        </fieldset>
       </div>
-    </section>
-
-    <section id="last-run-section">
-      <div id="last-run-info" role="region" aria-label="Last run information">
+      <div id="findings-list" class="findings-list" aria-live="polite">
+        <p class="empty-state">Loading findings…</p>
       </div>
     </section>
   </main>
