@@ -161,7 +161,13 @@ function parseFindingId(id: string): { ecosystem: Ecosystem; name: string; versi
 }
 
 function truncate(text: string): string {
-  return text.replace(/\s+/g, ' ').trim().slice(0, SUMMARY_LENGTH);
+  return text
+    .replace(/^[ \t]{0,3}#{1,6}(?:[ \t]+(.*?))?[ \t#\r]*$/gm, (_line, heading: string | undefined) =>
+      !heading ? '' : heading.endsWith(':') ? heading : `${heading}:`,
+    )
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, SUMMARY_LENGTH);
 }
 
 function isGithubDetails(details: unknown): details is GithubDetails {

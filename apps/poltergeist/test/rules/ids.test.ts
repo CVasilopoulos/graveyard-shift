@@ -155,6 +155,17 @@ describe('finding text', () => {
     expect(finding.summary).toBe('x'.repeat(280));
   });
 
+  it('turns Markdown heading lines of the description into labels so the summary reads as plain text', () => {
+    const description =
+      '### Impact\nIn express <4.20.0, passing untrusted input to `redirect()` may run code\n\n## Patches:\nFixed in 4.20.0\n#### ###\n#hashtag stays';
+    const [finding] = rules([osvResult(osvDetails({ id: 'GHSA-1234-5678-9abc', description }))]);
+    expect(finding.summary).toBe(
+      'Impact: In express <4.20.0, passing untrusted input to `redirect()` may run code Patches: Fixed in 4.20.0 #hashtag stays',
+    );
+    const [crlf] = rules([osvResult(osvDetails({ id: 'GHSA-1234-5678-9abc', description: '### Impact\r\n\r\nText' }))]);
+    expect(crlf.summary).toBe('Impact: Text');
+  });
+
   it('falls back to the OSV summary, then to the advisory id, for the title', () => {
     const [withSummary] = rules([osvResult(osvDetails({ id: 'GHSA-1234-5678-9abc', summary: 'From OSV' }))]);
     const [withoutSummary] = rules([osvResult(osvDetails({ id: 'PYSEC-2020-73', description: 'Details' }))]);
