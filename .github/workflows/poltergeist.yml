@@ -1,0 +1,79 @@
+name: Poltergeist
+
+on:
+  schedule:
+    - cron: "23 5 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Record findings and deploy the dashboard, but do not open, update or close issues
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: app-poltergeist
+  cancel-in-progress: false
+
+env:
+  APP: poltergeist
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - run: npm ci --ignore-scripts
+
+      - run: npm run build
+
+      - name: Run the app
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run == true || (github.event_name != 'schedule' && github.ref_name != github.event.repository.default_branch) }}
+        run: |
+          args=("apps/$APP")
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          npm run --silent graveyard-shift -- run "${args[@]}"
+
+      - name: Commit the findings
+        if: ${{ !cancelled() }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "apps/$APP/data"
+          if git diff --cached --quiet; then
+            echo "No data changes to commit"
+            exit 0
+          fi
+          git commit --quiet -m "$APP: findings from run $GITHUB_RUN_ID"
+          for attempt in 1 2 3; do
+            if git pull --quiet --rebase origin "$GITHUB_REF_NAME" && git push --quiet origin "HEAD:$GITHUB_REF_NAME"; then
+              exit 0
+            fi
+            sleep $((attempt * 10))
+          done
+          echo "Could not push the findings after 3 attempts" >&2
+          exit 1
+
+  pages:
+    needs: run
+    if: ${{ github.event_name == 'schedule' || github.ref_name == github.event.repository.default_branch }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

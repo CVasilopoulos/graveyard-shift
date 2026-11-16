@@ -1,8 +1,19 @@
 {
   "name": "graveyard-shift-monorepo",
   "private": true,
+  "description": "Graveyard Shift: a template for watch-and-warn apps that run entirely on GitHub, plus the apps built from it",
+  "license": "MIT",
   "workspaces": [
     "skeleton",
     "apps/*"
-  ]
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm test --workspaces && vitest run --root scripts",
+    "graveyard-shift": "node skeleton/dist/cli/index.js",
+    "site": "node scripts/build-site.mjs site"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
 }

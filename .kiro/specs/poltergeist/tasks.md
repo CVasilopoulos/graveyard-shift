@@ -180,3 +180,12 @@ All TypeScript is compiled with `tsc` in strict mode to `dist/` using ES module 
     - Until the repository is public, raw.githubusercontent.com answers 404 for the demo lockfiles and every source fails (requirement 2.3), so the 2026-11-15 dry run served the two lockfiles from the working tree through a fetch shim preloaded with NODE_OPTIONS; OSV and GitHub were queried live: 12 hauntings, 1 ghost
   - Verify demo produces hauntings and ghosts as documented in `demo/README.md`
   - _Requirements: 12.1, 12.2, 13.1, 13.2, 13.3, 13.4, 15.1, 15.2, 15.3, 15.4_
+
+- [x] 13. Publish on GitHub (added at publishing, written outside Kiro)
+  - [x] 13.1 Write `.github/workflows/poltergeist.yml`: daily cron and manual dispatch with a `dry_run` input; `npm ci`, build, `graveyard-shift run apps/poltergeist`, commit the app's `data/` folder back; least-privilege permissions, one run at a time, actions pinned to commit SHAs
+    - _Requirements: 11.1, 12.2_
+  - [x] 13.2 Write `scripts/build-site.mjs`, the reusable `.github/workflows/pages.yml` and `.github/workflows/ci.yml`: the `site` command for every app plus its data files and a landing page, deployed with the official Pages actions
+    - _Requirements: 12.3; skeleton 8.2, 13.4_
+  - [x] 13.3 Fix the skeleton `site` command in `skeleton/src/cli/site.ts` (it looked for `dist/dashboard`, which the build never creates) and the dashboard in `skeleton/src/dashboard/` (status and severity styles never matched the class names, theme labels were ignored, contrast below WCAG AA), with tests in `skeleton/test/cli/site.test.ts` and `skeleton/test/dashboard/app.test.ts`
+    - _Requirements: 14.2; skeleton 8.5-8.8, 8.14, 13.4_
+  - [x] 13.4 Turn Markdown headings in advisory descriptions into plain-text labels in `apps/poltergeist/src/rules.ts`, tested in `apps/poltergeist/test/rules/ids.test.ts` (design amendment 8)
