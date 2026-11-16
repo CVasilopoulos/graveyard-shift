@@ -9,5 +9,6 @@
         "apps/poltergeist/demo/haunted-house/requirements.txt"
       ]
     }
-  ]
+  ],
+  "maxNewIssues": 15
 }

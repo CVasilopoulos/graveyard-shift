@@ -7,8 +7,8 @@ This package provides the foundation for building a watch-and-warn app that runs
 A source is an async function that fetches from a public API and returns structured findings.
 
 ```typescript
-import { createHttpClient } from 'graveyard-shift/sources/http';
-import type { SourceResult } from 'graveyard-shift/core/types';
+import { createHttpClient } from 'graveyard-shift';
+import type { SourceResult } from 'graveyard-shift';
 
 const http = createHttpClient({
   userAgent: 'my-app/1.0.0 (+https://github.com/user/my-app)',
@@ -34,8 +34,8 @@ export async function mySource(): Promise<SourceResult> {
 A rule is a pure function that transforms source results into partial findings, adding context and severity.
 
 ```typescript
-import type { SourceResult, Finding } from 'graveyard-shift/core/types';
-import { mergeById } from 'graveyard-shift/core/mergeById';
+import type { SourceResult, Finding } from 'graveyard-shift';
+import { mergeById } from 'graveyard-shift';
 
 export function rules(results: SourceResult[]): Array<Omit<Finding, 'firstSeen' | 'lastSeen' | 'resolvedAt' | 'stale'>> {
   const merged = mergeById(results);
@@ -77,7 +77,7 @@ export const config = {
 A theme defines the app's name, description, and dashboard appearance.
 
 ```typescript
-import type { AppDefinition } from 'graveyard-shift/core/types';
+import type { AppDefinition } from 'graveyard-shift';
 
 const theme = {
   name: 'My Watch App',
@@ -154,7 +154,7 @@ Use the returned client's `get(url, opts?)` or `post(url, body, opts?)` method; 
 The [`createMcpServer`](./src/mcp/server.ts) factory exposes findings to AI agents via the Model Context Protocol.
 
 ```typescript
-import { createMcpServer } from 'graveyard-shift/mcp/server';
+import { createMcpServer } from 'graveyard-shift';
 
 // Data source: local directory or HTTPS URL
 const handle = createMcpServer({
@@ -182,8 +182,8 @@ Local data sources read `findings.json` and `runs.json` from disk. Remote source
 The [`notify`](./src/notify/notifier.ts) function manages GitHub issues and PRs for confirmed findings only.
 
 ```typescript
-import { notify } from 'graveyard-shift/notify/notifier';
-import type { DiffResult, Finding } from 'graveyard-shift/core/types';
+import { notify } from 'graveyard-shift';
+import type { DiffResult, Finding } from 'graveyard-shift';
 
 await notify(diff, findings, {
   dryRun: false,
@@ -199,7 +199,7 @@ await notify(diff, findings, {
 The [`mergeById`](./src/core/mergeById.ts) function groups source results by finding id, deduplicating sources.
 
 ```typescript
-import { mergeById } from 'graveyard-shift/core/mergeById';
+import { mergeById } from 'graveyard-shift';
 
 const merged = mergeById(results);
 // merged[0] = {

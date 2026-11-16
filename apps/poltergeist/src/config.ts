@@ -32,6 +32,7 @@ export const configSchema = z.object({
   repo: z.string().optional(),
   maxNewIssues: z.number().int().nonnegative().optional(),
   maxNewPRs: z.number().int().nonnegative().optional(),
+  resolvedRetentionDays: z.number().int().nonnegative().optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;

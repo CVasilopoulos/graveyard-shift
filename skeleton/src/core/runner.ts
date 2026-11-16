@@ -39,6 +39,12 @@ function notifierConfig(config: unknown): Omit<NotifierOptions, 'dryRun'> {
   };
 }
 
+function configRetentionDays(config: unknown): number | undefined {
+  if (typeof config !== 'object' || config === null) return undefined;
+  const days = (config as Record<string, unknown>).resolvedRetentionDays;
+  return typeof days === 'number' && Number.isInteger(days) && days >= 0 ? days : undefined;
+}
+
 /**
  * Orchestrates the full app cycle:
  * 1. Config validation
@@ -56,7 +62,6 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
   appDef: AppDefinition<TSchema>,
   opts: RunnerOptions,
 ): Promise<void> {
-  const retentionDays = opts.resolvedRetentionDays ?? 14;
   const now = new Date().toISOString();
 
   // 1. Config validation
@@ -82,6 +87,8 @@ export async function runApp<TSchema extends z.ZodTypeAny>(
       `Failed to load and validate config from ${opts.configPath}: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
+
+  const retentionDays = opts.resolvedRetentionDays ?? configRetentionDays(config) ?? 14;
 
   // 2. Fetch all sources concurrently
   const sourceResults: SourceResult[] = [];

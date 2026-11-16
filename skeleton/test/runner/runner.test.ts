@@ -16,6 +16,7 @@ const configSchema = z.object({
   repo: z.string().optional(),
   maxNewIssues: z.number().optional(),
   maxNewPRs: z.number().optional(),
+  resolvedRetentionDays: z.number().optional(),
 });
 type Config = z.infer<typeof configSchema>;
 
@@ -134,6 +135,22 @@ describe('runApp', () => {
     expect((await findingsById()).a).toBeDefined();
     await run({ items: {} }, '2026-11-16T00:00:01.000Z');
     expect((await findingsById()).a).toBeUndefined();
+  });
+
+  it('takes the retention window from the config when the caller sets none', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] }, resolvedRetentionDays: 1 }, T1);
+    await run({ items: {}, resolvedRetentionDays: 1 }, T2);
+    await run({ items: {}, resolvedRetentionDays: 1 }, T3);
+    expect((await findingsById()).a).toBeDefined();
+    await run({ items: {}, resolvedRetentionDays: 1 }, '2026-11-03T00:00:01.000Z');
+    expect((await findingsById()).a).toBeUndefined();
+  });
+
+  it('prefers the caller retention window over the config', async () => {
+    await run({ items: { alpha: ['a'], beta: ['a'] }, resolvedRetentionDays: 1 }, T1, { resolvedRetentionDays: 30 });
+    await run({ items: {}, resolvedRetentionDays: 1 }, T2, { resolvedRetentionDays: 30 });
+    await run({ items: {}, resolvedRetentionDays: 1 }, '2026-11-10T00:00:00.000Z', { resolvedRetentionDays: 30 });
+    expect((await findingsById()).a).toBeDefined();
   });
 
   it('carries an erroring source previous evidence forward with its error', async () => {
