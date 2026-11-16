@@ -1,15 +1,10 @@
 #!/usr/bin/env node
 
-import { promises as fs } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { stableStringify } from '../core/stableJson.js';
 import { runApp } from '../core/runner.js';
 import { createMcpServer } from '../mcp/server.js';
 import { resolveAppModule } from './appModule.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { buildSite } from './site.js';
 
 /**
  * Print usage information
@@ -148,39 +143,7 @@ async function cmdSite(args: string[]): Promise<void> {
       throw new Error('App module does not export default AppDefinition with theme');
     }
 
-    // Create output directory
-    const resolvedOutDir = path.resolve(outDir);
-    await fs.mkdir(resolvedOutDir, { recursive: true });
-
-    // Copy dashboard files from skeleton
-    const dashboardDir = path.join(
-      path.dirname(__dirname),
-      'dashboard'
-    );
-
-    const files = await fs.readdir(dashboardDir);
-    for (const file of files) {
-      const srcPath = path.join(dashboardDir, file);
-      const destPath = path.join(resolvedOutDir, file);
-
-      // Check if it's a file (not a directory)
-      const stat = await fs.stat(srcPath);
-      if (stat.isFile()) {
-        const content = await fs.readFile(srcPath);
-        await fs.writeFile(destPath, content);
-      }
-    }
-
-    // Write theme.json
-    const themeData = {
-      name: appDef.theme.name,
-      tagline: appDef.theme.tagline,
-      accentColor: appDef.theme.accentColor,
-      labels: appDef.theme.labels,
-    };
-
-    const themeJsonPath = path.join(resolvedOutDir, 'theme.json');
-    await fs.writeFile(themeJsonPath, stableStringify(themeData), 'utf-8');
+    await buildSite(appDef.theme, path.resolve(outDir));
 
     process.exit(0);
   } catch (err) {
