@@ -1,0 +1,361 @@
+[
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-qw6h-vgh9-j6wx: express vulnerable to XSS via response.redirect()"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-qw6h-vgh9-j6wx (CVE-2024-43796): express vulnerable to XSS via response.redirect()"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade express to 4.20.0 or later (OSV and GitHub agree).",
+      "value": "4.20.0"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:express@4.17.1:GHSA-qw6h-vgh9-j6wx",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "low",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "Impact: In express <4.20.0, passing untrusted user input - even after sanitizing it - to `response.redirect()` may execute untrusted code Patches: this issue is patched in express 4.20.0 Workarounds: users are encouraged to upgrade to the patched version of express, but otherwise",
+    "title": "express@4.17.1: express vulnerable to XSS via response.redirect()",
+    "url": "https://github.com/advisories/GHSA-qw6h-vgh9-j6wx"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-rv95-896h-c2vc: Express.js Open Redirect in malformed URLs"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-rv95-896h-c2vc (CVE-2024-29041): Express.js Open Redirect in malformed URLs"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade express to 4.19.2 or later (OSV and GitHub agree).",
+      "value": "4.19.2"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:express@4.17.1:GHSA-rv95-896h-c2vc",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "medium",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "Impact: Versions of Express.js prior to 4.19.2 and pre-release alpha and beta versions before 5.0.0-beta.3 are affected by an open redirect vulnerability using malformed URLs. When a user of Express performs a redirect using a user-provided URL Express performs an encode [using `",
+    "title": "express@4.17.1: Express.js Open Redirect in malformed URLs",
+    "url": "https://github.com/advisories/GHSA-rv95-896h-c2vc"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-29mw-wpgm-hmr9: Regular Expression Denial of Service (ReDoS) in lodash"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-29mw-wpgm-hmr9 (CVE-2020-28500): Regular Expression Denial of Service (ReDoS) in lodash"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade lodash to 4.17.21 or later (OSV and GitHub agree).",
+      "value": "4.17.21"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-29mw-wpgm-hmr9",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "medium",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "All versions of package lodash prior to 4.17.21 are vulnerable to Regular Expression Denial of Service (ReDoS) via the `toNumber`, `trim` and `trimEnd` functions. Steps to reproduce (provided by reporter Liyuan Chen): ```js var lo = require('lodash'); function build_blank(n) { va",
+    "title": "lodash@4.17.15: Regular Expression Denial of Service (ReDoS) in lodash",
+    "url": "https://github.com/advisories/GHSA-29mw-wpgm-hmr9"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-35jh-r3h4-6jhm: Command Injection in lodash"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-35jh-r3h4-6jhm (CVE-2021-23337): Command Injection in lodash"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade lodash to 4.17.21 or later (OSV and GitHub agree).",
+      "value": "4.17.21"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-35jh-r3h4-6jhm",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "high",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "`lodash` versions prior to 4.17.21 are vulnerable to Command Injection via the template function.",
+    "title": "lodash@4.17.15: Command Injection in lodash",
+    "url": "https://github.com/advisories/GHSA-35jh-r3h4-6jhm"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-p6mc-m468-83gw: Prototype Pollution in lodash"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-p6mc-m468-83gw (CVE-2020-8203): Prototype Pollution in lodash"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade lodash to 4.17.19 or later (OSV and GitHub agree).",
+      "value": "4.17.19"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-p6mc-m468-83gw",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "high",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "Versions of lodash prior to 4.17.19 are vulnerable to Prototype Pollution. The functions `pick`, `set`, `setWith`, `update`, `updateWith`, and `zipObjectDeep` allow a malicious user to modify the prototype of Object if the property identifiers are user-supplied. Being affected by",
+    "title": "lodash@4.17.15: Prototype Pollution in lodash",
+    "url": "https://github.com/advisories/GHSA-p6mc-m468-83gw"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-r5fr-rjxr-66jc: lodash vulnerable to Code Injection via `_.template` imports key names"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-r5fr-rjxr-66jc (CVE-2026-4800): lodash vulnerable to Code Injection via `_.template` imports key names"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade lodash to 4.18.0 or later (OSV and GitHub agree).",
+      "value": "4.18.0"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-r5fr-rjxr-66jc",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "high",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "Impact: The fix for [CVE-2021-23337](https://github.com/advisories/GHSA-35jh-r3h4-6jhm) added validation for the `variable` option in `_.template` but did not apply the same validation to `options.imports` key names. Both paths flow into the same `Function()` constructor sink. Wh",
+    "title": "lodash@4.17.15: lodash vulnerable to Code Injection via `_.template` imports key names",
+    "url": "https://github.com/advisories/GHSA-r5fr-rjxr-66jc"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-xxjr-mmjv-4gpg: Lodash has Prototype Pollution Vulnerability in `_.unset`, `_.omit`, and `_.pullAt` functions"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-xxjr-mmjv-4gpg (CVE-2025-13465): Lodash has Prototype Pollution Vulnerability in `_.unset`, `_.omit`, and `_.pullAt` functions"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade lodash to 4.17.23 or later (OSV and GitHub agree).",
+      "value": "4.17.23"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-xxjr-mmjv-4gpg",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "medium",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "Impact: The `_.unset`, `_.omit`, and `_.pullAt` functions are vulnerable to prototype pollution. An attacker can pass crafted paths which cause Lodash to delete methods from global prototypes. The issue permits deletion of properties but does not allow overwriting their original ",
+    "title": "lodash@4.17.15: Lodash has Prototype Pollution Vulnerability in `_.unset`, `_.omit`, and `_.pullAt` functions",
+    "url": "https://github.com/advisories/GHSA-xxjr-mmjv-4gpg"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-xvch-5gv4-984h: Prototype Pollution in minimist"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-xvch-5gv4-984h (CVE-2021-44906): Prototype Pollution in minimist"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade minimist to 1.2.6 or later (OSV and GitHub agree).",
+      "value": "1.2.6"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:minimist@1.2.5:GHSA-xvch-5gv4-984h",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "critical",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "Minimist prior to 1.2.6 and 0.2.4 is vulnerable to Prototype Pollution via file `index.js`, function `setKey()` (lines 69-95).",
+    "title": "minimist@1.2.5: Prototype Pollution in minimist",
+    "url": "https://github.com/advisories/GHSA-xvch-5gv4-984h"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV PYSEC-2020-73: ** DISPUTED ** pandas through 1.0.3 can unserialize and execute commands from an untrusted file that is passed to the read_pickle() function, if __reduce__ makes an os.system call. NOTE: third parties dispute this issue because the read_pickle() function is documented as unsafe and it is the user's responsibility to use the function in a secure manner."
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade pandas to 1.0.4 or later (OSV only).",
+      "value": "1.0.4"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:pandas@1.0.3:PYSEC-2020-73",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "info",
+    "sources": [
+      "osv"
+    ],
+    "status": "ghost",
+    "summary": "** DISPUTED ** pandas through 1.0.3 can unserialize and execute commands from an untrusted file that is passed to the read_pickle() function, if __reduce__ makes an os.system call. NOTE: third parties dispute this issue because the read_pickle() function is documented as unsafe a",
+    "title": "pandas@1.0.3: PYSEC-2020-73",
+    "url": "https://osv.dev/vulnerability/PYSEC-2020-73"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-9hjg-9r4m-mvj7: Requests vulnerable to .netrc credentials leak via malicious URLs"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-9hjg-9r4m-mvj7 (CVE-2024-47081): Requests vulnerable to .netrc credentials leak via malicious URLs"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade requests to 2.32.4 or later (OSV and GitHub agree).",
+      "value": "2.32.4"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-9hjg-9r4m-mvj7",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "medium",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "Impact: Due to a URL parsing issue, Requests releases prior to 2.32.4 may leak .netrc credentials to third parties for specific maliciously-crafted URLs. Workarounds: For older versions of Requests, use of the .netrc file can be disabled with `trust_env=False` on your Requests Se",
+    "title": "requests@2.25.0: Requests vulnerable to .netrc credentials leak via malicious URLs",
+    "url": "https://github.com/advisories/GHSA-9hjg-9r4m-mvj7"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-9wx4-h78v-vm56: Requests `Session` object does not verify requests after making first request with verify=False"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-9wx4-h78v-vm56 (CVE-2024-35195): Requests `Session` object does not verify requests after making first request with verify=False"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade requests to 2.32.0 or later (OSV and GitHub agree).",
+      "value": "2.32.0"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-9wx4-h78v-vm56",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "medium",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "When using a `requests.Session`, if the first request to a given origin is made with `verify=False`, TLS certificate verification may remain disabled for all subsequent requests to that origin, even if `verify=True` is explicitly specified later. This occurs because the underlyin",
+    "title": "requests@2.25.0: Requests `Session` object does not verify requests after making first request with verify=False",
+    "url": "https://github.com/advisories/GHSA-9wx4-h78v-vm56"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-gc5v-m9x4-r6x2: Requests has Insecure Temp File Reuse in its extract_zipped_paths() utility function"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-gc5v-m9x4-r6x2 (CVE-2026-25645): Requests has Insecure Temp File Reuse in its extract_zipped_paths() utility function"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade requests to 2.33.0 or later (OSV and GitHub agree).",
+      "value": "2.33.0"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-gc5v-m9x4-r6x2",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "medium",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "Impact: The `requests.utils.extract_zipped_paths()` utility function uses a predictable filename when extracting files from zip archives into the system temporary directory. If the target file already exists, it is reused without validation. A local attacker with write access to ",
+    "title": "requests@2.25.0: Requests has Insecure Temp File Reuse in its extract_zipped_paths() utility function",
+    "url": "https://github.com/advisories/GHSA-gc5v-m9x4-r6x2"
+  },
+  {
+    "evidence": [
+      {
+        "sourceName": "osv",
+        "text": "OSV GHSA-j8r2-6x86-q33q: Unintended leak of Proxy-Authorization header in requests"
+      },
+      {
+        "sourceName": "github",
+        "text": "GitHub GHSA-j8r2-6x86-q33q (CVE-2023-32681): Unintended leak of Proxy-Authorization header in requests"
+      }
+    ],
+    "firstSeen": "2026-11-16T08:12:42.474Z",
+    "fix": {
+      "text": "Upgrade requests to 2.31.0 or later (OSV and GitHub agree).",
+      "value": "2.31.0"
+    },
+    "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-j8r2-6x86-q33q",
+    "lastSeen": "2026-11-16T08:12:42.474Z",
+    "severity": "medium",
+    "sources": [
+      "osv",
+      "github"
+    ],
+    "status": "confirmed",
+    "summary": "Impact: Since Requests v2.3.0, Requests has been vulnerable to potentially leaking `Proxy-Authorization` headers to destination servers, specifically during redirects to an HTTPS origin. This is a product of how `rebuild_proxies` is used to recompute and [reattach the `Proxy-Auth",
+    "title": "requests@2.25.0: Unintended leak of Proxy-Authorization header in requests",
+    "url": "https://github.com/advisories/GHSA-j8r2-6x86-q33q"
+  }
+]
