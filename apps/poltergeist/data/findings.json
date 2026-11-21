@@ -16,7 +16,7 @@
       "value": "4.20.0"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:express@4.17.1:GHSA-qw6h-vgh9-j6wx",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "low",
     "sources": [
       "osv",
@@ -44,7 +44,7 @@
       "value": "4.19.2"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:express@4.17.1:GHSA-rv95-896h-c2vc",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "medium",
     "sources": [
       "osv",
@@ -72,7 +72,7 @@
       "value": "4.17.21"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-29mw-wpgm-hmr9",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "medium",
     "sources": [
       "osv",
@@ -100,7 +100,7 @@
       "value": "4.17.21"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-35jh-r3h4-6jhm",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "high",
     "sources": [
       "osv",
@@ -128,7 +128,7 @@
       "value": "4.17.19"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-p6mc-m468-83gw",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "high",
     "sources": [
       "osv",
@@ -156,7 +156,7 @@
       "value": "4.18.0"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-r5fr-rjxr-66jc",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "high",
     "sources": [
       "osv",
@@ -184,7 +184,7 @@
       "value": "4.17.23"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-xxjr-mmjv-4gpg",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "medium",
     "sources": [
       "osv",
@@ -212,7 +212,7 @@
       "value": "1.2.6"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:npm:minimist@1.2.5:GHSA-xvch-5gv4-984h",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "critical",
     "sources": [
       "osv",
@@ -236,7 +236,7 @@
       "value": "1.0.4"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:pandas@1.0.3:PYSEC-2020-73",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "info",
     "sources": [
       "osv"
@@ -263,7 +263,7 @@
       "value": "2.32.4"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-9hjg-9r4m-mvj7",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "medium",
     "sources": [
       "osv",
@@ -291,7 +291,7 @@
       "value": "2.32.0"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-9wx4-h78v-vm56",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "medium",
     "sources": [
       "osv",
@@ -319,7 +319,7 @@
       "value": "2.33.0"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-gc5v-m9x4-r6x2",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "medium",
     "sources": [
       "osv",
@@ -347,7 +347,7 @@
       "value": "2.31.0"
     },
     "id": "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-j8r2-6x86-q33q",
-    "lastSeen": "2026-11-20T14:11:14.297Z",
+    "lastSeen": "2026-11-21T13:36:30.093Z",
     "severity": "medium",
     "sources": [
       "osv",
