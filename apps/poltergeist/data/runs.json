@@ -54,5 +54,12 @@
     "ghostCount": 1,
     "resolvedCount": 0,
     "runAt": "2026-11-23T16:14:21.952Z"
+  },
+  {
+    "confirmedCount": 12,
+    "errorSources": [],
+    "ghostCount": 1,
+    "resolvedCount": 0,
+    "runAt": "2026-11-24T16:01:35.847Z"
   }
 ]
