@@ -240,5 +240,27 @@
       "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-gc5v-m9x4-r6x2",
       "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-j8r2-6x86-q33q"
     ]
+  },
+  {
+    "appeared": [],
+    "demoted": [],
+    "promoted": [],
+    "resolved": [],
+    "runAt": "2026-11-27T15:22:44.691Z",
+    "still": [
+      "poltergeist:CVasilopoulos/graveyard-shift:npm:express@4.17.1:GHSA-qw6h-vgh9-j6wx",
+      "poltergeist:CVasilopoulos/graveyard-shift:npm:express@4.17.1:GHSA-rv95-896h-c2vc",
+      "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-29mw-wpgm-hmr9",
+      "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-35jh-r3h4-6jhm",
+      "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-p6mc-m468-83gw",
+      "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-r5fr-rjxr-66jc",
+      "poltergeist:CVasilopoulos/graveyard-shift:npm:lodash@4.17.15:GHSA-xxjr-mmjv-4gpg",
+      "poltergeist:CVasilopoulos/graveyard-shift:npm:minimist@1.2.5:GHSA-xvch-5gv4-984h",
+      "poltergeist:CVasilopoulos/graveyard-shift:PyPI:pandas@1.0.3:PYSEC-2020-73",
+      "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-9hjg-9r4m-mvj7",
+      "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-9wx4-h78v-vm56",
+      "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-gc5v-m9x4-r6x2",
+      "poltergeist:CVasilopoulos/graveyard-shift:PyPI:requests@2.25.0:GHSA-j8r2-6x86-q33q"
+    ]
   }
 ]
